@@ -3,11 +3,12 @@ import Dashboard from "./pages/user/dashboard";
 import AuthLayout from "./layout/auth_layout";
 import UserLogin from "./pages/auth/user_login";
 import UserRegister from "./pages/auth/user_register";
+import LandingPage from "./pages/landing/landing_page";
 
 const routes = createBrowserRouter([
   {
     path: "/",
-    Component: Dashboard,
+    Component: LandingPage,
   },
   {
     path: "auth",
@@ -16,6 +17,11 @@ const routes = createBrowserRouter([
       { path: "login", Component: UserLogin },
       { path: "signup", Component: UserRegister },
     ],
+  },
+  {
+    path: "user",
+    Component: AuthLayout,
+    children: [{ path: "dashboard", Component: Dashboard }],
   },
 ]);
 
