@@ -70,7 +70,7 @@ const subcribe = [
 ];
 export default function Footer() {
   return (
-    <footer className="bg-gray-50 py-20 grid grid-cols-4 gap-10 w-full px-10 font-clash">
+    <footer className="bg-gray-50 py-20 grid grid-cols-3 gap-10 w-full px-10 font-clash">
       <div className="flex flex-col gap-3">
         <h5 className="font-medium text-2xl">Get In Touch With Us</h5>
         <p>
@@ -87,31 +87,34 @@ export default function Footer() {
           ))}
         </div>
       </div>
-      <div className="flex flex-col gap-3">
-        <h5 className="font-medium text-xl">Collection</h5>
-        <div className="flex flex-col gap-2">
-          {collection.map((item) => (
-            <div key={item.label} className="flex items-center gap-2">
-              <Link to={item.url} className="text-base">
-                {item.label}
-              </Link>
-            </div>
-          ))}
+      <div className="flex flex-row gap-30">
+        <div className="flex flex-col gap-3">
+          <h5 className="font-medium text-xl">Collection</h5>
+          <div className="flex flex-col gap-2">
+            {collection.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <Link to={item.url} className="text-base">
+                  {item.label}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <h5 className="font-medium text-xl">Customer Service</h5>
+          <div className="flex flex-col gap-2">
+            {services.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <Link to={item.url} className="text-base">
+                  {item.label}
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="flex flex-col gap-3">
-        <h5 className="font-medium text-xl">Customer Service</h5>
-        <div className="flex flex-col gap-2">
-          {services.map((item) => (
-            <div key={item.label} className="flex items-center gap-2">
-              <Link to={item.url} className="text-base">
-                {item.label}
-              </Link>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col gap-3">
+
+      <div className="flex flex-col gap-3 justify-start items-center">
         <h5 className="font-medium text-lg">
           Join Our Waitlist for Exclusive Offers
         </h5>
