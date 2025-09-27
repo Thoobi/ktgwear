@@ -78,7 +78,11 @@ export default function Navbar() {
         ))}
       </ul>
       <div className="flex gap-4 items-center">
-        <FaRegUser size={18} className="cursor-pointer" />
+        <FaRegUser
+          size={18}
+          className="cursor-pointer"
+          onClick={() => (window.location.href = "/account/login")}
+        />
         <div className="relative">
           <span className="absolute -top-1 -right-2 text-[10px] bg-red-500 text-white rounded-full px-1">
             0

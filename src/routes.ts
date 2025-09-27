@@ -3,6 +3,7 @@ import Dashboard from "./pages/user/dashboard";
 import AuthLayout from "./layout/auth_layout";
 import UserLogin from "./pages/auth/user_login";
 import UserRegister from "./pages/auth/user_register";
+import UserForgot from "./pages/auth/user_forgot";
 import LandingPage from "./pages/landing/landing_page";
 import About from "./pages/landing/about";
 import Contact from "./pages/landing/contact";
@@ -22,14 +23,14 @@ const routes = createBrowserRouter([
         path: "contact",
         Component: Contact,
       },
-    ],
-  },
-  {
-    path: "auth",
-    Component: AuthLayout,
-    children: [
-      { path: "login", Component: UserLogin },
-      { path: "signup", Component: UserRegister },
+      {
+        path: "account",
+        children: [
+          { path: "login", Component: UserLogin },
+          { path: "signup", Component: UserRegister },
+          { path: "forgot", Component: UserForgot },
+        ],
+      },
     ],
   },
   {
