@@ -6,7 +6,7 @@
 
 @font-face {
   font-family: "ClashGrotesk";
-  src: url("./assets/Fonts/ClashGrotesk/Fonts/TTF/ClashGrotesk-Variable.ttf")
+  src: url("./assets/fonts/ClashGrotesk/Fonts/TTF/ClashGrotesk-Variable.ttf")
     format("truetype");
   font-weight: 200 300 400 500 600 700 800;
   font-display: swap;
