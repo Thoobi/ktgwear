@@ -1,93 +1,91 @@
-import { useLocation } from "react-router-dom";
-import { Link } from "react-router-dom";
-import { FaRegUser } from "react-icons/fa6";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { FaRegUser, FaCartShopping } from "react-icons/fa6";
+import { useAuth } from "../hooks/useAuth";
 import Logo from "../../assets/ktg-text-logo.png";
-import { FaCartShopping } from "react-icons/fa6";
+import { useCart } from "../hooks/useCart";
+import { useMemo, useEffect } from "react";
 
-const navlinks = [
-  {
-    label: "Home",
-    url: "/",
-  },
-  {
-    label: "About",
-    url: "/about",
-  },
-  {
-    label: "Contact",
-    url: "/contact",
-  },
-  {
-    label: "Joggers",
-    url: "/shop",
-  },
-  {
-    label: "Hoodies",
-    url: "/hoodies",
-  },
-  {
-    label: "SweatShirts",
-    url: "/sweatshirts",
-  },
-  {
-    label: "Cargo",
-    url: "/cargo",
-  },
-  {
-    label: "Polo",
-    url: "/polo",
-  },
-  {
-    label: "Two Piece",
-    url: "/two-piece",
-  },
-  {
-    label: "Essentials",
-    url: "/essentials",
-  },
+const baseLinks = [
+  { label: "Home", url: "/" },
+  { label: "Shop", url: "/shop" },
+  { label: "About", url: "/about" },
+  { label: "Contact", url: "/contact" },
 ];
 
 export default function Navbar() {
+  const { isAuthenticated } = useAuth(); // ✅ FIX: get isAuthenticated from useAuth
+  const { setIsCartVisible, cartLength, allWearables, getAllWears } = useCart(); // ✅ FIX: merged into single destructure
+
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (url: string) => location.pathname === url;
+
+  // fetch wearables once when empty
+  useEffect(() => {
+    if (!allWearables || allWearables.length === 0) {
+      void getAllWears();
+    }
+  }, [allWearables, getAllWears]);
+
+  const categoryLinks = useMemo(() => {
+    const set = new Set<string>();
+    (allWearables || []).forEach((w) => {
+      if (w.category) set.add(w.category);
+    });
+    return Array.from(set).map((cat) => {
+      const slug = cat.toLowerCase().replace(/\s+/g, "-");
+      return { label: cat, url: `/shop/${slug}` };
+    });
+  }, [allWearables]);
+
   return (
     <nav className="flex justify-between items-center py-4 bg-gray-50/10 backdrop-blur-sm px-10 border-b border-b-gray-200 font-clash">
+      {/* Logo */}
       <div>
         <Link to="/">
           <img src={Logo} alt="KTG Logo" />
         </Link>
       </div>
+
+      {/* Links */}
       <ul className="flex gap-5">
-        {navlinks.map((link) => (
+        {[...baseLinks, ...categoryLinks].map((link) => (
           <li
             key={link.url}
-            className="flex flex-col items-center group py-1 relative"
+            className={`flex flex-col items-center group py-1 relative ${
+              isActive(link.url)
+                ? "font-semibold text-gray-800"
+                : "text-gray-600"
+            }`}
           >
-            <Link
-              to={link.url}
-              className={`${isActive(link.url) && "font-medium"}`}
-            >
-              {link.label}
-            </Link>
-            <span
-              className={`group-hover:w-full group-hover:absolute group-hover:bottom-1 w-0 bg-black group-hover:h-[1px] transition-all duration-250 ease-in-out ${
-                isActive(link.url) && "group-hover:hidden"
-              }`}
-            ></span>
+            <Link to={link.url}>{link.label}</Link>
           </li>
         ))}
       </ul>
+
+      {/* Right icons */}
       <div className="flex gap-4 items-center">
         <FaRegUser
           size={18}
           className="cursor-pointer"
-          onClick={() => (window.location.href = "/account/login")}
+          onClick={() => {
+            console.log("[Navbar] user icon click, isAuthenticated:", {
+              isAuthenticated,
+            });
+            if (isAuthenticated) navigate("/user/dashboard");
+            else navigate("/account/login");
+          }}
         />
+
         <div className="relative">
-          <span className="absolute -top-1 -right-2 text-[10px] bg-red-500 text-white rounded-full px-1">
-            0
+          <span className="absolute -top-1 -right-2 text-[10px] bg-red-500 text-white font-medium rounded-full px-1">
+            {cartLength}
           </span>
-          <FaCartShopping size={20} className="cursor-pointer" />
+          <FaCartShopping
+            size={20}
+            className="cursor-pointer"
+            onClick={() => setIsCartVisible(true)}
+          />
         </div>
       </div>
     </nav>

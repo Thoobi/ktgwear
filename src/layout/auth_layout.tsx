@@ -1,8 +1,11 @@
 import { Outlet } from "react-router-dom";
+import Navbar from "../components/postauth/navbar";
 export default function AuthLayout() {
   return (
     <div>
-      <h1>Auth Layout</h1>
+      <header className="sticky top-0 z-50 bg-white">
+        <Navbar />
+      </header>
       <Outlet />
     </div>
   );

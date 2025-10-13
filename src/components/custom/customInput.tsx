@@ -5,6 +5,11 @@ interface CustomInputProps {
   type: string;
   placeholder: string;
   className?: string;
+  value?: string;
+  onChange?: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
+  error?: string | null;
 }
 
 export default function CustomInput({
@@ -12,6 +17,9 @@ export default function CustomInput({
   type = "text",
   placeholder,
   className,
+  value,
+  onChange,
+  error,
 }: CustomInputProps) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   return (
@@ -24,6 +32,8 @@ export default function CustomInput({
           <textarea
             placeholder={placeholder}
             className="focus:outline-none focus:ring-0 resize-none min-h-40 text-sm"
+            value={value}
+            onChange={onChange}
           />
         ) : (
           <div
@@ -43,6 +53,8 @@ export default function CustomInput({
               className={`focus:outline-none focus:ring-0 text-base ${
                 type === "password" ? "w-[80%]" : "w-full"
               }`}
+              value={value}
+              onChange={onChange}
             />
             {type.toLowerCase() === "password" && (
               <span
@@ -58,6 +70,7 @@ export default function CustomInput({
             )}
           </div>
         )}
+        {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
       </label>
     </div>
   );
