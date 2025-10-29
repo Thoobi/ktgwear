@@ -1,4 +1,4 @@
-import { supabase, adminAuthClient, supabaseAdmin } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createContext, useEffect, useState, type ReactNode } from "react";
 import type { registerData, loginData } from "../../types/auth";
@@ -12,7 +12,7 @@ import type {
 import {
   signupSchema,
   loginSchema,
-  adminSchema,
+  // adminSchema,
   forgotPasswordSchema,
   zodErrorsToFieldMap,
 } from "../../schemas/auth";
@@ -162,36 +162,36 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const handleAdminSignup = async (email: string, password: string) => {
-    const parsedAdmin = adminSchema.safeParse({ email, password });
-    if (!parsedAdmin.success) {
-      const validationErrors = zodErrorsToFieldMap(parsedAdmin.error);
-      return { data: null, error: parsedAdmin.error, validationErrors };
-    }
-    setisSignupLoading(true);
-    try {
-      const { data, error } = await adminAuthClient.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { display_name: "KTG", role: "admin" },
-      });
-      if (error) return { data: null, error };
-      if (data.user) {
-        const { error: profileError } = await supabaseAdmin
-          .from("profiles")
-          .upsert({ id: data.user.id, role: "admin" });
-        if (profileError) throw profileError;
-      }
-      toast.success("Admin account created successfully!");
-      return { data, error: null };
-    } catch (error) {
-      console.error("Admin signup error:", error);
-      return { data: null, error };
-    } finally {
-      setisSignupLoading(false);
-    }
-  };
+  // const handleAdminSignup = async (email: string, password: string) => {
+  //   const parsedAdmin = adminSchema.safeParse({ email, password });
+  //   if (!parsedAdmin.success) {
+  //     const validationErrors = zodErrorsToFieldMap(parsedAdmin.error);
+  //     return { data: null, error: parsedAdmin.error, validationErrors };
+  //   }
+  //   setisSignupLoading(true);
+  //   try {
+  //     const { data, error } = await adminAuthClient.createUser({
+  //       email,
+  //       password,
+  //       email_confirm: true,
+  //       user_metadata: { display_name: "KTG", role: "admin" },
+  //     });
+  //     if (error) return { data: null, error };
+  //     if (data.user) {
+  //       const { error: profileError } = await supabaseAdmin
+  //         .from("profiles")
+  //         .upsert({ id: data.user.id, role: "admin" });
+  //       if (profileError) throw profileError;
+  //     }
+  //     toast.success("Admin account created successfully!");
+  //     return { data, error: null };
+  //   } catch (error) {
+  //     console.error("Admin signup error:", error);
+  //     return { data: null, error };
+  //   } finally {
+  //     setisSignupLoading(false);
+  //   }
+  // };
 
   const handleForgotPassword = async (email: string) => {
     const parsed = forgotPasswordSchema.safeParse({ email });
@@ -215,41 +215,41 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const handleAdminLogin = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      const { data: profileData, error: profileError } = await supabaseAdmin
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-      if (profileError) throw profileError;
-      if (profileData.role !== "admin") {
-        await supabase.auth.signOut();
-        throw new Error("Unauthorized: Not an admin user");
-      }
-      setIsAdminAuthenticated(true);
-      toast.success("Admin login successful");
-      window.location.assign("/admin/dashboard");
-      // redirect to admin login page
-      window.location.assign(`${window.location.origin}/admin/login`);
-      return { data, error: null };
-    } catch (error) {
-      console.error("Admin login error:", error);
-      // normalize Supabase error messages
-      toast.error(
-        supabaseAuthError(error, "You are not authorized to access this area")
-      );
-      return { data: null, error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleAdminLogin = async (email: string, password: string) => {
+  //   setIsLoading(true);
+  //   try {
+  //     const { data, error } = await supabase.auth.signInWithPassword({
+  //       email,
+  //       password,
+  //     });
+  //     if (error) throw error;
+  //     const { data: profileData, error: profileError } = await supabaseAdmin
+  //       .from("profiles")
+  //       .select("role")
+  //       .eq("id", data.user.id)
+  //       .single();
+  //     if (profileError) throw profileError;
+  //     if (profileData.role !== "admin") {
+  //       await supabase.auth.signOut();
+  //       throw new Error("Unauthorized: Not an admin user");
+  //     }
+  //     setIsAdminAuthenticated(true);
+  //     toast.success("Admin login successful");
+  //     window.location.assign("/admin/dashboard");
+  //     // redirect to admin login page
+  //     window.location.assign(`${window.location.origin}/admin/login`);
+  //     return { data, error: null };
+  //   } catch (error) {
+  //     console.error("Admin login error:", error);
+  //     // normalize Supabase error messages
+  //     toast.error(
+  //       supabaseAuthError(error, "You are not authorized to access this area")
+  //     );
+  //     return { data: null, error };
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -326,8 +326,8 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser,
     isLoading,
     getUser,
-    handleAdminSignup,
-    handleAdminLogin,
+    // handleAdminSignup,
+    // handleAdminLogin,
     handleForgotPassword,
     isAdminAuthenticated,
     handleAdminLogout,

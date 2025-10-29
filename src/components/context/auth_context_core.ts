@@ -34,8 +34,8 @@ export interface AuthContextProps {
   setUser: React.Dispatch<React.SetStateAction<AppUser | null>>;
   isLoading: boolean;
   getUser: () => Promise<SupabaseUser | null>;
-  handleAdminSignup: (email: string, password: string) => Promise<AuthResponse>;
-  handleAdminLogin: (email: string, password: string) => Promise<AuthResponse>;
+  // handleAdminSignup: (email: string, password: string) => Promise<AuthResponse>;
+  // handleAdminLogin: (email: string, password: string) => Promise<AuthResponse>;
   isAdminAuthenticated: boolean;
   handleAdminLogout: () => Promise<{ error: unknown | null }>;
   handleForgotPassword: (email: string) => Promise<AuthResponse>;
