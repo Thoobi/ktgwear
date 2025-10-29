@@ -8,8 +8,6 @@ import React, {
   useMemo,
   type ReactNode,
 } from "react";
-// import ShippingInfo from "@/components/userComponents/shippingInfo";
-// import Payment from "@/components/userComponents/stack/Payment";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase";
 
@@ -21,11 +19,11 @@ export interface Wearable {
   price: number;
   category: string;
   image_url: string;
-  size: string[]; // available sizes
+  size: string[];
 }
 
 export interface CartItem extends Omit<Wearable, "size"> {
-  size: string; // chosen size for this cart item (single value)
+  size: string;
   quantity: number;
 }
 
@@ -55,7 +53,7 @@ interface ProgressTabItem {
 }
 
 interface CartContextType {
-  addToCart: (value: Wearable) => void;
+  addToCart: (value: Wearable, size?: string) => void;
   removeFromCart: (value: CartItem) => void;
   increaseQuantity: (value: CartItem) => void;
   decreaseQuantity: (value: CartItem) => void;
@@ -85,6 +83,8 @@ interface CartContextType {
   setReviewInfo: React.Dispatch<React.SetStateAction<ReviewInfoType>>;
   orderInfo: OrderInfoType;
   setOrderInfo: React.Dispatch<React.SetStateAction<OrderInfoType>>;
+  orderPlaced: boolean;
+  setOrderPlaced: React.Dispatch<React.SetStateAction<boolean>>;
   setMenuActive: React.Dispatch<React.SetStateAction<boolean>>;
   menuActive: boolean;
   getAllWears: () => Promise<void>;
@@ -158,6 +158,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfoType>({});
   const [reviewInfo, setReviewInfo] = useState<ReviewInfoType>({});
   const [orderInfo, setOrderInfo] = useState<OrderInfoType>({});
+  const [orderPlaced, setOrderPlaced] = useState<boolean>(false);
   const [isCartVisible, setIsCartVisible] = useState(false);
   const [disableCheckout, setDisableCheckout] = useState(true);
 
@@ -186,30 +187,33 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   // ---------- Cart Logic ----------
   const addToCart = useCallback(
-    (value: Wearable) => {
+    (value: Wearable, sizeParam?: string) => {
       setCartItems((prevCart) => {
         const prevCartItems = Array.isArray(prevCart) ? prevCart : [];
 
-        if (selectedSize === "SELECT A SIZE" || !selectedSize) {
+        const sizeToUse =
+          sizeParam && sizeParam !== "SELECT A SIZE" ? sizeParam : selectedSize;
+
+        if (!sizeToUse) {
           toast.error("Please select a size first");
           return prevCartItems;
         }
 
         const existingProduct = prevCartItems.find(
-          (item) => item.id === value.id && item.size === selectedSize
+          (item) => item.id === value.id && item.size === sizeToUse
         );
 
         if (existingProduct) {
           toast.error(
-            `This item in size ${selectedSize} is already in your cart!`
+            `This item in size ${sizeToUse} is already in your cart!`
           );
           return prevCartItems;
         }
 
-        const newItem: CartItem = { ...value, quantity: 1, size: selectedSize };
+        const newItem: CartItem = { ...value, quantity: 1, size: sizeToUse };
         const updatedCart = [...prevCartItems, newItem];
 
-        toast.success(`Item added in size ${selectedSize} to cart 🤩`);
+        toast.success(`Item added in size ${sizeToUse} to cart 🤩`);
         sessionStorage.setItem("cartItems", JSON.stringify(updatedCart));
         setCartLength(updatedCart.length);
 
@@ -348,6 +352,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setReviewInfo,
     orderInfo,
     setOrderInfo,
+    orderPlaced,
+    setOrderPlaced,
     setMenuActive,
     menuActive,
     getAllWears,

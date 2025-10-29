@@ -4,9 +4,12 @@ import Cart from "../components/shared/cart";
 import { Outlet } from "react-router-dom";
 import { useCart } from "../components/hooks/useCart";
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function HomeLayout() {
+  const location = useLocation();
   const { isCartVisible, setIsCartVisible } = useCart();
+  const isCheckout = location.pathname === "/checkout";
 
   useEffect(() => {
     if (isCartVisible) {
@@ -17,9 +20,11 @@ export default function HomeLayout() {
   }, [isCartVisible]);
   return (
     <main>
-      <header className="sticky top-0 z-50 bg-white">
-        <Navbar />
-      </header>
+      {!isCheckout && (
+        <header className="sticky top-0 z-50 bg-white">
+          <Navbar />
+        </header>
+      )}
       <Outlet />
       <Footer />
       {isCartVisible && (

@@ -22,8 +22,6 @@ export default function ShopCategoryPage() {
     return slug(w.category || "") === category.toLowerCase();
   });
 
-  console.log(items);
-
   return (
     <div className="px-6 pt-10 pb-40 font-clash">
       <span className="w-full flex flex-col justify-center items-center">
@@ -45,7 +43,7 @@ export default function ShopCategoryPage() {
                   <img
                     src={item.image_url}
                     alt={item.name}
-                    className="w-[260px] h-[250px] object-contain aspect-square mb-4"
+                    className="w-[260px] h-[250px] bg-gray-50 object-contain aspect-square mb-4"
                   />
                 </div>
                 <div className="px-3 w-full">
@@ -59,9 +57,12 @@ export default function ShopCategoryPage() {
                     )}`}</p>
                   </span>
                 </div>
-                <button className="w-full py-2 mt-4 cursor-pointer bg-black text-white font-medium">
-                  View Details
-                </button>
+                <Link
+                  to={`/product/${item.id}`}
+                  className="w-full py-2 mt-4 cursor-pointer bg-black text-white font-normal text-center block"
+                >
+                  View Product
+                </Link>
               </div>
             ))}
           </div>

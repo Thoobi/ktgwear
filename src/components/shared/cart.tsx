@@ -115,7 +115,7 @@ const Cart = () => {
             )}`}</p>
           </div>
           <button
-            className={`bg-white text-black rounded-full h-12 w-full ${
+            className={`bg-white cursor-pointer text-black rounded-full h-12 w-full ${
               disabled ? "opacity-50 cursor-logo" : ""
             }`}
             disabled={cartItems.length < 1 ? disabled : false}

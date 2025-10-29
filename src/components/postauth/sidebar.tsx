@@ -20,19 +20,13 @@ export function Sidebar({
   const { handleLogout, getUser, isUserDataLoading } = useAuth();
   const [userName, setUserName] = useState("");
   useEffect(() => {
-    let mounted = true;
     const fetchUser = async () => {
       const user = await getUser();
-      if (mounted && user) {
+      if (user) {
         setUserName(user.user_metadata?.display_name || user.email || "");
       }
     };
-    // call once on mount; do not depend on `getUser` identity to avoid
-    // continuous refetch if the provider recreates the function on each render
-    void fetchUser();
-    return () => {
-      mounted = false;
-    };
+    fetchUser();
   }, []);
 
   return (

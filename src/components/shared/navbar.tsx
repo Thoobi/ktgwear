@@ -13,14 +13,13 @@ const baseLinks = [
 ];
 
 export default function Navbar() {
-  const { isAuthenticated } = useAuth(); // ✅ FIX: get isAuthenticated from useAuth
-  const { setIsCartVisible, cartLength, allWearables, getAllWears } = useCart(); // ✅ FIX: merged into single destructure
+  const { isAuthenticated } = useAuth();
+  const { setIsCartVisible, cartLength, allWearables, getAllWears } = useCart();
 
   const location = useLocation();
   const navigate = useNavigate();
   const isActive = (url: string) => location.pathname === url;
 
-  // fetch wearables once when empty
   useEffect(() => {
     if (!allWearables || allWearables.length === 0) {
       void getAllWears();
@@ -40,22 +39,18 @@ export default function Navbar() {
 
   return (
     <nav className="flex justify-between items-center py-4 bg-gray-50/10 backdrop-blur-sm px-10 border-b border-b-gray-200 font-clash">
-      {/* Logo */}
       <div>
         <Link to="/">
           <img src={Logo} alt="KTG Logo" />
         </Link>
       </div>
 
-      {/* Links */}
       <ul className="flex gap-5">
         {[...baseLinks, ...categoryLinks].map((link) => (
           <li
             key={link.url}
             className={`flex flex-col items-center group py-1 relative ${
-              isActive(link.url)
-                ? "font-semibold text-gray-800"
-                : "text-gray-600"
+              isActive(link.url) ? "font-medium text-gray-800" : "text-gray-600"
             }`}
           >
             <Link to={link.url}>{link.label}</Link>
@@ -63,7 +58,6 @@ export default function Navbar() {
         ))}
       </ul>
 
-      {/* Right icons */}
       <div className="flex gap-4 items-center">
         <FaRegUser
           size={18}

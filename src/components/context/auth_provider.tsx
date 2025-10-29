@@ -111,14 +111,11 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
         );
         return { data: null, error };
       }
-      // If signup returned a user session, set local user state and authentication flag
       if (data?.user) {
         setUser(mapSupabaseUser(data.user));
-        setIsAuthenticated(true);
-        // redirect to dashboard
-        window.location.assign("/user/dashboard");
+        setIsAuthenticated(false);
       }
-      toast.success("Account created successfully!");
+      // signup succeeded; UI components should handle user-facing toasts/redirects
       return { data, error: null };
     } catch (error) {
       console.error("Signup error:", error);
@@ -261,6 +258,11 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) return { error };
       setUser(null);
       setIsAuthenticated(false);
+      toast.success("Logged out successfully", {
+        duration: 1500,
+        onAutoClose: () =>
+          window.location.assign(`${window.location.origin}/account/login`),
+      });
       return { error: null };
     } catch (error) {
       console.error("Logout error:", error);

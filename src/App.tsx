@@ -8,7 +8,7 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-right" expand richColors />
         <RouterProvider router={routes} />
       </CartProvider>
     </AuthProvider>

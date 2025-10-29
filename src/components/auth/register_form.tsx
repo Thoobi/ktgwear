@@ -2,6 +2,7 @@ import CustomInput from "../custom/customInput";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { signupSchema, zodErrorsToFieldMap } from "../../schemas/auth";
+import { toast } from "sonner";
 
 export default function RegisterForm() {
   const { handleSignup, isSignupLoading } = useAuth();
@@ -19,7 +20,26 @@ export default function RegisterForm() {
       return;
     }
     const res = await handleSignup({ email, password, username: name });
-    if (res.validationErrors) setErrors(res.validationErrors);
+    // show validation errors if any
+    if (res.validationErrors) {
+      setErrors(res.validationErrors);
+      return;
+    }
+
+    // if signup returned an error, surface it
+    if (res.error) {
+      toast.error("Signup failed. Please try again.");
+      return;
+    }
+
+    // success - ask the user to check their email; do NOT redirect
+    toast.success("Account created. Check your email to verify your account.");
+    // clear the form after successful signup
+    setName("");
+    setEmail("");
+    setPassword("");
+    setConfirm("");
+    setErrors({});
   };
 
   const onChangeField = (field: string, value: string) => {
@@ -28,7 +48,6 @@ export default function RegisterForm() {
     if (field === "password") setPassword(value);
     if (field === "confirm") setConfirm(value);
 
-    // validate using zod, but only show the error for the current field
     const model = {
       email: field === "email" ? value : email,
       password: field === "password" ? value : password,

@@ -6,10 +6,13 @@ import UserRegister from "./pages/auth/user_register";
 import UserForgot from "./pages/auth/user_forgot";
 import ResetPasswordPage from "./pages/auth/reset_password_page";
 import LandingPage from "./pages/landing/landing_page";
+import Checkout from "./pages/landing/checkout";
+import ProductDetails from "./pages/landing/product_details";
 import About from "./pages/landing/about";
 import Contact from "./pages/landing/contact";
 import ShopCategoryPage from "./pages/landing/shop_category";
 import HomeLayout from "./layout/home_layout";
+import OrderDetails from "./components/postauth/order_details";
 
 const routes = createBrowserRouter([
   {
@@ -42,12 +45,23 @@ const routes = createBrowserRouter([
           { path: "reset", Component: ResetPasswordPage },
         ],
       },
+      {
+        path: "checkout",
+        Component: Checkout,
+      },
+      {
+        path: "product/:id",
+        Component: ProductDetails,
+      },
     ],
   },
   {
     path: "user",
     Component: AuthLayout,
-    children: [{ path: "dashboard", Component: Dashboard }],
+    children: [
+      { path: "dashboard", Component: Dashboard },
+      { path: "orders/:id", Component: OrderDetails },
+    ],
   },
 ]);
 
