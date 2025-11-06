@@ -33,13 +33,57 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
     null
   );
   const [pendingSave, setPendingSave] = useState<ShippingInfoType | null>(null);
+  const [pendingUpdateSave, setPendingUpdateSave] =
+    useState<ShippingInfoType | null>(null);
   const [saving, setSaving] = useState(false);
-  const emailRegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  // helper: count empty fields / compare
+  const fieldKeys: (keyof ShippingInfoType)[] = [
+    "firstName",
+    "lastName",
+    "email",
+    "phone",
+    "address",
+    "city",
+    "state",
+    "country",
+    "zip",
+  ];
 
-  useEffect(() => {
-    // helpful for debugging during development
-    // console.log("Shipping Info Updated:", shippingInfo);
-  }, [shippingInfo]);
+  const isMostlyEmpty = (vals: ShippingInfoType) => {
+    const total = fieldKeys.length;
+    let empty = 0;
+    for (const k of fieldKeys) {
+      const v = (vals[k] as unknown as string) || "";
+      if (typeof v !== "string" || v.trim() === "") empty++;
+    }
+    // consider "very fully empty" when 80%+ fields are empty
+    return empty / total >= 0.8;
+  };
+
+  const normalizeShipping = (vals: ShippingInfoType) => {
+    const out: Record<string, unknown> = {};
+    for (const k of fieldKeys) {
+      const v = (vals[k] as unknown as string) || "";
+      out[k] = v.trim();
+    }
+    return out;
+  };
+
+  const equalShipping = (
+    a: ShippingInfoType | null,
+    b: ShippingInfoType | null
+  ) => {
+    if (!a || !b) return false;
+    try {
+      return (
+        JSON.stringify(normalizeShipping(a as ShippingInfoType)) ===
+        JSON.stringify(normalizeShipping(b as ShippingInfoType))
+      );
+    } catch {
+      return false;
+    }
+  };
+  const emailRegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   useEffect(() => {
     // try to load saved shipping info for authenticated user
@@ -48,8 +92,8 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
       try {
         console.log("loadSaved(shipping form) userID:", userID);
         const { data, error } = await supabase
-          .from("shippingInfo")
-          .select("shipping_info, user_id, created_at")
+          .from("shipping_info")
+          .select("id, shipping_info, user_id, created_at")
           .eq("user_id", userID)
           .order("created_at", { ascending: false });
         console.log("shippingInfo query result (shipping form):", {
@@ -72,6 +116,19 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
     };
 
     void loadSaved();
+  }, [userID]);
+
+  // also try to load local saved shipping for unauthenticated users
+  useEffect(() => {
+    if (userID) return;
+    try {
+      const raw = localStorage.getItem("savedShippingInfo");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as ShippingInfoType | null;
+      if (parsed) setSavedShipping(parsed);
+    } catch {
+      // ignore parse errors
+    }
   }, [userID]);
 
   const validationSchema = Yup.object({
@@ -98,9 +155,27 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
         values: ShippingInfoType,
         { setSubmitting }: FormikHelpers<ShippingInfoType>
       ) => {
-        // store values and show in-form card instead of browser confirm
+        // store values and decide whether to prompt saving
         try {
           setShippingInfo(values);
+
+          // if there is already a saved shipping that's identical, skip the save prompt
+          if (savedShipping && equalShipping(savedShipping, values)) {
+            // nothing to save – continue directly
+            setPendingSave(null);
+            setPendingUpdateSave(null);
+            setActiveTab("PAYMENT");
+            onNext();
+            return;
+          }
+
+          // if there's a saved shipping and the new values differ, ask whether to update saved info
+          if (savedShipping && !equalShipping(savedShipping, values)) {
+            setPendingUpdateSave(values);
+            return;
+          }
+
+          // otherwise set pendingSave which will show the Save/Don't Save card
           setPendingSave(values);
         } catch (error) {
           console.error("Form submit error:", error);
@@ -134,11 +209,14 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
                       try {
                         if (userID) {
                           const { error } = await supabase
-                            .from("shippingInfo")
-                            .upsert({
-                              user_id: userID,
-                              shipping_info: pendingSave,
-                            });
+                            .from("shipping_info")
+                            .upsert(
+                              {
+                                user_id: userID,
+                                shipping_info: pendingSave,
+                              },
+                              { onConflict: "user_id" }
+                            );
                           if (error) {
                             console.error(
                               "Could not save shipping info:",
@@ -196,7 +274,90 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
               </div>
             </div>
           )}
-          {savedShipping && (
+          {pendingUpdateSave && (
+            <div className="mb-4 p-4 border bg-yellow-50 shadow">
+              <div className="flex items-start justify-between">
+                <div className="pr-4">
+                  <div className="text-sm font-medium">Update saved info?</div>
+                  <div className="text-xs text-gray-600">
+                    We found a saved shipping address. Your entered details are
+                    different — would you like to update your saved shipping
+                    info with these new values?
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={saving}
+                    className="px-3 py-1 text-sm bg-green-600 text-white cursor-pointer"
+                    onClick={async () => {
+                      if (!pendingUpdateSave) return;
+                      setSaving(true);
+                      try {
+                        if (userID) {
+                          const { error } = await supabase
+                            .from("shipping_info")
+                            .upsert(
+                              {
+                                user_id: userID,
+                                shipping_info: pendingUpdateSave,
+                              },
+                              { onConflict: "user_id" }
+                            );
+                          if (error) {
+                            console.error(
+                              "Could not update shipping info:",
+                              error
+                            );
+                            toast.error("Could not update shipping info.");
+                            localStorage.setItem(
+                              "savedShippingInfo",
+                              JSON.stringify(pendingUpdateSave)
+                            );
+                          } else {
+                            toast.success("Saved shipping info updated.");
+                            setSavedShipping(pendingUpdateSave);
+                          }
+                        } else {
+                          localStorage.setItem(
+                            "savedShippingInfo",
+                            JSON.stringify(pendingUpdateSave)
+                          );
+                          setSavedShipping(pendingUpdateSave);
+                          toast.success("Saved shipping info updated locally");
+                        }
+                        setActiveTab("PAYMENT");
+                        onNext();
+                      } catch (err) {
+                        console.error("update shipping error:", err);
+                        toast.error("Could not update shipping info");
+                      } finally {
+                        setSaving(false);
+                        setPendingUpdateSave(null);
+                      }
+                    }}
+                  >
+                    Save Update
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={saving}
+                    className="px-3 py-1 text-sm border cursor-pointer"
+                    onClick={() => {
+                      // don't update saved, just continue with current values
+                      setPendingUpdateSave(null);
+                      setActiveTab("PAYMENT");
+                      onNext();
+                    }}
+                  >
+                    Don't update
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {savedShipping && isMostlyEmpty(shippingInfo) && (
             <div className="mb-4 p-3 border  bg-gray-50">
               <div className="flex items-center justify-between">
                 <div>

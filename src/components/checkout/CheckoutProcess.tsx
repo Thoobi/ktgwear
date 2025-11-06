@@ -19,7 +19,7 @@ const CheckoutProcess: React.FC = () => {
     setOrderPlaced,
     disableCheckout,
   } = useCart();
-  const { userID } = useAuth();
+  const { user, userID: ctxUserID, getUser } = useAuth();
   const navigate = useNavigate();
 
   if (disableCheckout) {
@@ -60,12 +60,29 @@ const CheckoutProcess: React.FC = () => {
       payment: paymentInfo as unknown as Record<string, unknown>,
     };
 
-    const referenceCandidate = (paymentInfo as Record<string, unknown>)
-      ?.reference;
+    const paymentRecord = paymentInfo as unknown as Record<string, unknown>;
+
+    // if the payment step already auto-saved the order, skip re-saving
+    if (paymentRecord && paymentRecord._order_saved) {
+      toast.success("Order placed successfully!");
+      setOrderPlaced?.(true);
+      clearCart();
+      navigate("/user/dashboard");
+      return;
+    }
+
+    const referenceCandidate = paymentRecord?.reference;
     const referenceId =
       typeof referenceCandidate === "string" ? referenceCandidate : "";
 
-    if (!userID) {
+    // ensure we have a user id; userID in context may be null if getUser wasn't called yet
+    let uid = ctxUserID ?? user?.id ?? null;
+    if (!uid) {
+      const fetched = await getUser();
+      uid = fetched?.id ?? null;
+    }
+
+    if (!uid) {
       toast.error("You must be signed in to place an order.");
       return;
     }
@@ -75,7 +92,7 @@ const CheckoutProcess: React.FC = () => {
       order_details,
       reference_id: referenceId,
       delivery_price: 0,
-      user_id: userID,
+      user_id: uid,
     });
 
     if (error) {

@@ -23,11 +23,11 @@ const Cart = () => {
 
   return (
     <div
-      className={`flex flex-row bg-black h-full w-lg max-md:w-full max-md:h-screen font-clash cart`}
+      className={`flex flex-row bg-black h-full w-lg max-md:w-full max-md:h-screen font-clash pr-2 items-start justify-center cart`}
       ref={cart}
     >
-      <span
-        className="flex flex-col items-center px-1 gap-4 justify-start mt-4 cursor-pointer text-white w-[40px]"
+      <button
+        className="flex flex-col items-center px-2 gap-4 justify-start mt-4 cursor-pointer text-white"
         onClick={() => {
           setIsCartVisible(false);
         }}
@@ -36,7 +36,7 @@ const Cart = () => {
         <span className="text-base font-light rotate-180 [writing-mode:vertical-rl]">
           Close shopping cart
         </span>
-      </span>
+      </button>
       <div className="w-[28.75rem] max-md:w-full h-full bg-gray-100 text-black py-10 overflow-scroll">
         <div className="absolute top-0 py-3 pr-14 pl-5 z-20 text-black w-full items-center justify-between flex flex-row-reverse bg-white/10 backdrop-blur-sm">
           <h1 className="text-4xl font-medium max-lg:text-3xl max-md:font-semibold">

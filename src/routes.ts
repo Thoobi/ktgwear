@@ -13,6 +13,10 @@ import Contact from "./pages/landing/contact";
 import ShopCategoryPage from "./pages/landing/shop_category";
 import HomeLayout from "./layout/home_layout";
 import OrderDetails from "./components/postauth/order_details";
+import AdminDashboard from "./pages/admin/admin_dashboard";
+import AdminProducts from "./pages/admin/admin_products";
+import AdminOrders from "./pages/admin/admin_orders";
+import AdminManage from "./pages/admin/admin_manage";
 
 const routes = createBrowserRouter([
   {
@@ -61,6 +65,15 @@ const routes = createBrowserRouter([
     children: [
       { path: "dashboard", Component: Dashboard },
       { path: "orders/:id", Component: OrderDetails },
+    ],
+  },
+  {
+    path: "admin",
+    children: [
+      { index: true, Component: AdminDashboard },
+      { path: "products", Component: AdminProducts },
+      { path: "orders", Component: AdminOrders },
+      { path: "manage", Component: AdminManage },
     ],
   },
 ]);

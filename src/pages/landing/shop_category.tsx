@@ -38,7 +38,7 @@ export default function ShopCategoryPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {items.map((item) => (
-              <div key={item.id} className="border p-2">
+              <div key={item.id} className="border border-gray-300 p-2">
                 <div className="w-full">
                   <img
                     src={item.image_url}

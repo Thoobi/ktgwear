@@ -66,6 +66,44 @@ export default function Order() {
               key={id}
               className="p-4 border flex items-center justify-between"
             >
+              <div className="mr-4">
+                {/* try to show a thumbnail for the order: prefer order-level image, fall back to first item image */}
+                {(() => {
+                  const od = o.order_details as unknown as
+                    | Record<string, unknown>
+                    | undefined;
+                  const items =
+                    (od && Array.isArray(od.items)
+                      ? (od.items as Array<Record<string, unknown>>)
+                      : []) || [];
+                  const orderObj = o as Record<string, unknown>;
+                  const orderImage =
+                    typeof orderObj["image"] === "string"
+                      ? (orderObj["image"] as string)
+                      : undefined;
+                  const imagesField = orderObj["images"] as unknown;
+                  const imagesArray = Array.isArray(imagesField)
+                    ? (imagesField as string[])
+                    : undefined;
+                  const orderImageFromArray =
+                    imagesArray && imagesArray.length
+                      ? imagesArray[0]
+                      : undefined;
+                  const firstItemImage = items.length
+                    ? (items[0].image_url as string | undefined)
+                    : undefined;
+                  const src =
+                    orderImage || orderImageFromArray || firstItemImage;
+                  if (!src) return null;
+                  return (
+                    <img
+                      src={String(src)}
+                      alt={`order-${id}-img`}
+                      className="w-20 h-20 object-cover rounded"
+                    />
+                  );
+                })()}
+              </div>
               <div>
                 <div className="font-medium">Order {id}</div>
                 <div className="text-sm text-gray-600">{`₦${Number(
@@ -78,7 +116,7 @@ export default function Order() {
               <div className="flex items-center gap-4">
                 <div className="text-sm">{paymentStatus}</div>
                 <button
-                  className="px-3 py-1 border flex items-center gap-2 interactive"
+                  className="px-3 py-1 border flex items-center cursor-pointer gap-2 interactive"
                   onClick={() => navigate(`/user/orders/${id}`)}
                   aria-label={`View order ${id}`}
                 >

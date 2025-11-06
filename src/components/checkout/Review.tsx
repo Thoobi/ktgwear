@@ -55,7 +55,7 @@ const Review: React.FC<Props> = ({ onBack, onPlaceOrder }) => {
           onClick={() => setConfirmOpen(true)}
           className="bg-black text-white py-2 rounded flex-1 cursor-pointer"
         >
-          Save order
+          Complete order
         </button>
       </div>
 
@@ -63,10 +63,10 @@ const Review: React.FC<Props> = ({ onBack, onPlaceOrder }) => {
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="absolute inset-0 bg-black opacity-40" />
           <div className="bg-white p-6 rounded shadow-lg z-10 w-[min(420px,90%)]">
-            <h3 className="text-lg font-semibold mb-2">Save order?</h3>
+            <h3 className="text-lg font-semibold mb-2">Complete order?</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Do you want to save this order to your account so you can view it
-              in your order history?
+              Complete this order now. This will place the order and save it to
+              your account so you can view it in your order history.
             </p>
             <div className="flex gap-2 justify-end">
               <button
@@ -82,7 +82,7 @@ const Review: React.FC<Props> = ({ onBack, onPlaceOrder }) => {
                   if (onPlaceOrder) onPlaceOrder();
                 }}
               >
-                Yes, save order
+                Complete order
               </button>
             </div>
           </div>

@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
 
 // ---------- Types ----------
 
@@ -133,6 +134,7 @@ interface CartProviderProps {
 }
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
+  const { userID } = useAuth();
   const [allWearables, setAllWearables] = useState<Wearable[]>([]);
   const [cartActive, setCartActive] = useState(false);
   const [selectedSize, setSelectedSize] = useState("");
@@ -185,6 +187,67 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
   }, []);
 
+  // ---------- Load Cart from DB for signed-in users ----------
+  useEffect(() => {
+    // when user signs in, try to load their saved cart from DB and map to CartItem[]
+    if (!userID) return;
+
+    const fetchDbCart = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("cart")
+          .select("*")
+          .eq("user_id", userID)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.error("fetch cart error:", error);
+          return;
+        }
+
+        const rows = data as unknown as Array<Record<string, unknown>>;
+        if (!rows || rows.length === 0) {
+          // nothing in DB, keep any existing session cart
+          return;
+        }
+
+        // map DB rows to CartItem shape
+        const mapped: CartItem[] = rows.map((r) => {
+          const productId = String(r["product_id"] ?? "");
+          const name = String(r["name"] ?? "");
+          const price = Number(r["price"] ?? 0) || 0;
+          const category = String(r["category"] ?? "");
+          const image_url = String(r["image_url"] ?? "");
+          const qty = Number(r["quantity"] ?? 0) || 0;
+          const sizeField = r["size"] as unknown;
+          let size = "";
+          if (Array.isArray(sizeField) && sizeField.length > 0)
+            size = String((sizeField as unknown[])[0]);
+          else if (typeof sizeField === "string") size = String(sizeField);
+
+          return {
+            id: productId,
+            name,
+            price,
+            category,
+            image_url,
+            size,
+            quantity: qty,
+          } as CartItem;
+        });
+
+        // prefer DB cart as authoritative when data exists
+        setCartItems(mapped);
+        setCartLength(mapped.length || 0);
+        sessionStorage.setItem("cartItems", JSON.stringify(mapped));
+      } catch (err) {
+        console.error("error loading cart from db:", err);
+      }
+    };
+
+    void fetchDbCart();
+  }, [userID]);
+
   // ---------- Cart Logic ----------
   const addToCart = useCallback(
     (value: Wearable, sizeParam?: string) => {
@@ -217,56 +280,267 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         sessionStorage.setItem("cartItems", JSON.stringify(updatedCart));
         setCartLength(updatedCart.length);
 
+        // persist to DB for signed-in users
+        if (userID) {
+          (async () => {
+            try {
+              // find existing same product+size for this user
+              const { data: existingRows, error: selErr } = await supabase
+                .from("cart")
+                .select("*")
+                .eq("user_id", userID)
+                .eq("product_id", value.id);
+
+              if (selErr) {
+                console.error("cart select error:", selErr);
+              }
+
+              // attempt to find matching size entry (size stored as JSON/array)
+              let matched = null as Record<string, unknown> | null;
+              if (Array.isArray(existingRows)) {
+                for (const r of existingRows) {
+                  try {
+                    const s = (r as Record<string, unknown>)["size"] as unknown;
+                    if (Array.isArray(s)) {
+                      if (String(s[0]) === String(sizeToUse)) {
+                        matched = r as Record<string, unknown>;
+                        break;
+                      }
+                    } else if (typeof s === "string") {
+                      if (String(s) === String(sizeToUse)) {
+                        matched = r as Record<string, unknown>;
+                        break;
+                      }
+                    }
+                  } catch {
+                    /* ignore malformed row size */
+                  }
+                }
+              }
+
+              if (matched) {
+                const newQty = (Number(matched["quantity"] ?? 0) || 0) + 1;
+                const { error: updErr } = await supabase
+                  .from("cart")
+                  .update({ quantity: newQty })
+                  .eq("id", matched["id"] as string);
+                if (updErr) console.error("cart update error:", updErr);
+              } else {
+                const payload = {
+                  user_id: userID,
+                  product_id: value.id,
+                  name: value.name,
+                  price: value.price,
+                  category: value.category,
+                  image_url: value.image_url,
+                  size: [sizeToUse],
+                  quantity: 1,
+                } as Record<string, unknown>;
+                const { error: insErr } = await supabase
+                  .from("cart")
+                  .insert([payload]);
+                if (insErr) console.error("cart insert error:", insErr);
+              }
+            } catch (err) {
+              console.error("persist cart add error:", err);
+            }
+          })();
+        }
+
         return updatedCart;
       });
 
       setSelectedSize("SELECT A SIZE");
     },
-    [selectedSize]
+    [selectedSize, userID]
   );
 
-  const removeFromCart = useCallback((value: CartItem) => {
-    setCartItems((prevCart) => {
-      if (!prevCart || prevCart.length < 1) {
-        sessionStorage.removeItem("cartItems");
-        toast.error("Cart is empty");
-        setCartLength(0);
-        return [];
-      }
+  const removeFromCart = useCallback(
+    (value: CartItem) => {
+      setCartItems((prevCart) => {
+        if (!prevCart || prevCart.length < 1) {
+          sessionStorage.removeItem("cartItems");
+          toast.error("Cart is empty");
+          setCartLength(0);
+          return [];
+        }
 
-      const updatedCart = prevCart.filter(
-        (item) => !(item.id === value.id && item.size === value.size)
-      );
+        const updatedCart = prevCart.filter(
+          (item) => !(item.id === value.id && item.size === value.size)
+        );
 
-      toast.success("Item removed from cart");
-      sessionStorage.setItem("cartItems", JSON.stringify(updatedCart));
-      setCartLength(updatedCart.length);
+        toast.success("Item removed from cart");
+        sessionStorage.setItem("cartItems", JSON.stringify(updatedCart));
+        setCartLength(updatedCart.length);
 
-      return updatedCart;
-    });
-  }, []);
+        // persist removal to DB for signed-in users
+        if (userID) {
+          (async () => {
+            try {
+              const { data: existingRows, error: selErr } = await supabase
+                .from("cart")
+                .select("*")
+                .eq("user_id", userID)
+                .eq("product_id", value.id);
 
-  const increaseQuantity = useCallback((value: CartItem) => {
-    setCartItems((prevCart) =>
-      prevCart.map((item) =>
-        item.id === value.id && item.size === value.size
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
-    );
-  }, []);
+              if (selErr) console.error("cart select error:", selErr);
 
-  const decreaseQuantity = useCallback((value: CartItem) => {
-    setCartItems((prevCart) =>
-      prevCart
-        .map((item) =>
-          item.id === value.id && item.size === value.size && item.quantity > 1
-            ? { ...item, quantity: item.quantity - 1 }
+              if (Array.isArray(existingRows)) {
+                for (const r of existingRows) {
+                  try {
+                    const s = (r as Record<string, unknown>)["size"] as unknown;
+                    const sizeMatches = Array.isArray(s)
+                      ? String((s as unknown[])[0]) === String(value.size)
+                      : String(s) === String(value.size);
+                    if (sizeMatches) {
+                      await supabase
+                        .from("cart")
+                        .delete()
+                        .eq(
+                          "id",
+                          (r as Record<string, unknown>)["id"] as string
+                        );
+                      break;
+                    }
+                  } catch {
+                    // ignore
+                  }
+                }
+              }
+            } catch (err) {
+              console.error("persist cart remove error:", err);
+            }
+          })();
+        }
+
+        return updatedCart;
+      });
+    },
+    [userID]
+  );
+
+  const increaseQuantity = useCallback(
+    (value: CartItem) => {
+      setCartItems((prevCart) =>
+        prevCart.map((item) =>
+          item.id === value.id && item.size === value.size
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         )
-        .filter((item) => item.quantity > 0)
-    );
-  }, []);
+      );
+
+      // persist to DB
+      if (userID) {
+        (async () => {
+          try {
+            const { data: existingRows, error: selErr } = await supabase
+              .from("cart")
+              .select("*")
+              .eq("user_id", userID)
+              .eq("product_id", value.id);
+            if (selErr) console.error("cart select error:", selErr);
+
+            if (Array.isArray(existingRows)) {
+              for (const r of existingRows) {
+                try {
+                  const s = (r as Record<string, unknown>)["size"] as unknown;
+                  const sizeMatches = Array.isArray(s)
+                    ? String((s as unknown[])[0]) === String(value.size)
+                    : String(s) === String(value.size);
+                  if (sizeMatches) {
+                    const newQty =
+                      (Number(
+                        (r as Record<string, unknown>)["quantity"] ?? 0
+                      ) || 0) + 1;
+                    const { error: updErr } = await supabase
+                      .from("cart")
+                      .update({ quantity: newQty })
+                      .eq("id", (r as Record<string, unknown>)["id"] as string);
+                    if (updErr) console.error("cart update error:", updErr);
+                    break;
+                  }
+                } catch {
+                  // ignore
+                }
+              }
+            }
+          } catch (err) {
+            console.error("persist cart increase error:", err);
+          }
+        })();
+      }
+    },
+    [userID]
+  );
+
+  const decreaseQuantity = useCallback(
+    (value: CartItem) => {
+      setCartItems((prevCart) =>
+        prevCart
+          .map((item) =>
+            item.id === value.id &&
+            item.size === value.size &&
+            item.quantity > 1
+              ? { ...item, quantity: item.quantity - 1 }
+              : item
+          )
+          .filter((item) => item.quantity > 0)
+      );
+
+      if (userID) {
+        (async () => {
+          try {
+            const { data: existingRows, error: selErr } = await supabase
+              .from("cart")
+              .select("*")
+              .eq("user_id", userID)
+              .eq("product_id", value.id);
+            if (selErr) console.error("cart select error:", selErr);
+
+            if (Array.isArray(existingRows)) {
+              for (const r of existingRows) {
+                try {
+                  const s = (r as Record<string, unknown>)["size"] as unknown;
+                  const sizeMatches = Array.isArray(s)
+                    ? String((s as unknown[])[0]) === String(value.size)
+                    : String(s) === String(value.size);
+                  if (sizeMatches) {
+                    const currentQty =
+                      Number((r as Record<string, unknown>)["quantity"] ?? 0) ||
+                      0;
+                    if (currentQty > 1) {
+                      const { error: updErr } = await supabase
+                        .from("cart")
+                        .update({ quantity: currentQty - 1 })
+                        .eq(
+                          "id",
+                          (r as Record<string, unknown>)["id"] as string
+                        );
+                      if (updErr) console.error("cart update error:", updErr);
+                    } else {
+                      await supabase
+                        .from("cart")
+                        .delete()
+                        .eq(
+                          "id",
+                          (r as Record<string, unknown>)["id"] as string
+                        );
+                    }
+                    break;
+                  }
+                } catch {
+                  // ignore
+                }
+              }
+            }
+          } catch (err) {
+            console.error("persist cart decrease error:", err);
+          }
+        })();
+      }
+    },
+    [userID]
+  );
 
   const calculateTotal = useCallback((items: CartItem[]) => {
     return items.reduce(
@@ -322,7 +596,21 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setCartTotal(0);
     setCartLength(0);
     sessionStorage.removeItem("cartItems");
-  }, []);
+
+    if (userID) {
+      (async () => {
+        try {
+          const { error } = await supabase
+            .from("cart")
+            .delete()
+            .eq("user_id", userID);
+          if (error) console.error("cart clear error:", error);
+        } catch (err) {
+          console.error("persist cart clear error:", err);
+        }
+      })();
+    }
+  }, [userID]);
 
   // ---------- Context Value ----------
   const value: CartContextType = {

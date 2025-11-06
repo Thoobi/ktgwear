@@ -145,6 +145,27 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setUser(mapSupabaseUser(data.user ?? null));
       setIsAuthenticated(!!data.user);
+
+      // determine if the logged in user is an admin and redirect accordingly
+      if (data?.user) {
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", data.user.id)
+            .single();
+          if (!profileError && profileData?.role === "admin") {
+            setIsAdminAuthenticated(true);
+            toast.success("Admin login successful", {
+              onAutoClose: () => window.location.assign("/admin"),
+            });
+            return { data, error: null };
+          }
+        } catch (err) {
+          console.error("Error fetching profile on login:", err);
+        }
+      }
+
       toast.success("Login successful!", {
         onAutoClose: () => {
           if (data?.user) {
