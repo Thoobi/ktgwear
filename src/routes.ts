@@ -17,6 +17,8 @@ import AdminDashboard from "./pages/admin/admin_dashboard";
 import AdminProducts from "./pages/admin/admin_products";
 import AdminOrders from "./pages/admin/admin_orders";
 import AdminManage from "./pages/admin/admin_manage";
+import AdminFeatured from "./pages/admin/admin_featured";
+import NotFound from "./pages/404";
 
 const routes = createBrowserRouter([
   {
@@ -74,7 +76,12 @@ const routes = createBrowserRouter([
       { path: "products", Component: AdminProducts },
       { path: "orders", Component: AdminOrders },
       { path: "manage", Component: AdminManage },
+      { path: "featured", Component: AdminFeatured },
     ],
+  },
+  {
+    path: "*",
+    Component: NotFound,
   },
 ]);
 

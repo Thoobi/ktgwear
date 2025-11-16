@@ -148,8 +148,10 @@ export default function ShippingInfo() {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-3">Saved Shipping Information</h2>
+    <div className="py-4">
+      <h2 className="text-5xl max-md:text-2xl font-medium mb-3">
+        Saved Shipping Information
+      </h2>
 
       {loading ? (
         <div>Loading...</div>

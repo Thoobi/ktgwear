@@ -26,6 +26,14 @@ const AdminSidebar: React.FC = () => {
           Manage products
         </NavLink>
         <NavLink
+          to="/admin/featured"
+          className={({ isActive }) =>
+            linkBase + (isActive ? ` ${activeClass}` : "")
+          }
+        >
+          Featured Collections
+        </NavLink>
+        <NavLink
           to="/admin/orders"
           className={({ isActive }) =>
             linkBase + (isActive ? ` ${activeClass}` : "")

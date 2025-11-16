@@ -1,8 +1,8 @@
 export default function AboutUs() {
   return (
     <div className="">
-      <div className="flex flex-row justify-between items-center">
-        <p className="text-start text-lg font-normal font-clash max-w-3xl">
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-6 md:gap-8 lg:gap-10">
+        <p className="text-start text-sm sm:text-base md:text-lg font-normal font-clash lg:max-w-3xl">
           KTG wears is dedicated in becoming a world class fashion brand, which
           since its existence in the year 2018 we have been one of the best in
           delivering the season's most wanted styles to millions of people
@@ -25,11 +25,11 @@ export default function AboutUs() {
           KTG wears is forever committed in producing the best quality clothing
           and most importantly satisfying our customers.
         </p>
-        <div className="w-[450px] h-[500px]">
+        <div className="w-full sm:w-[400px] md:w-[450px] h-[300px] sm:h-[400px] md:h-[500px] flex-shrink-0">
           <img
             src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
             alt=""
-            className="h-full rounded-lg object-cover"
+            className="h-full w-full rounded-lg object-cover"
           />
         </div>
       </div>

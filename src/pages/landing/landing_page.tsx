@@ -1,4 +1,5 @@
 import SwiperImages from "../../components/home/swiperImages";
+import Featured from "../landing/featured";
 export default function LandingPage() {
   return (
     <section>
@@ -9,6 +10,7 @@ export default function LandingPage() {
           "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
         ]}
       />
+      <Featured />
     </section>
   );
 }

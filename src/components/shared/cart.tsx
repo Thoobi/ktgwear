@@ -3,8 +3,6 @@ import { IoCloseOutline } from "react-icons/io5";
 import { GoPlus } from "react-icons/go";
 import { HiMiniMinus } from "react-icons/hi2";
 import { useNavigate } from "react-router-dom";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
 import { useCart } from "../hooks/useCart";
 
 const Cart = () => {
@@ -17,13 +15,12 @@ const Cart = () => {
     decreaseQuantity,
     disableCheckout: disabled,
   } = useCart();
-  gsap.registerPlugin(useGSAP);
   const cart = useRef(null);
   const navigate = useNavigate();
 
   return (
     <div
-      className={`flex flex-row bg-black h-full w-lg max-md:w-full max-md:h-screen font-clash pr-2 items-start justify-center cart`}
+      className={`flex flex-row bg-black h-full w-lg max-md:w-full max-md:h-screen font-clash items-start justify-center cart`}
       ref={cart}
     >
       <button

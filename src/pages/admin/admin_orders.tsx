@@ -31,10 +31,14 @@ const AdminOrders: React.FC = () => {
       if (error) {
         console.error(error);
         setOrders([]);
+        setLoading(false);
         return;
       }
 
-      const raw = (data as Order[]) || [];
+      let raw: Order[] = [];
+      if (data) {
+        raw = data as Order[];
+      }
       const processed = raw.map((item) => {
         const rec = item as Record<string, unknown>;
         let od: unknown = rec["order_details"] ?? rec["orderDetails"] ?? null;
@@ -69,9 +73,9 @@ const AdminOrders: React.FC = () => {
       }
 
       setOrders(finalList);
+      setLoading(false);
     } catch (err) {
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };

@@ -6,6 +6,11 @@ import { useNavigate } from "react-router-dom";
 
 type OrderRow = Record<string, unknown>;
 
+// Helper function to safely convert data to orders array - extracted to avoid React Compiler issues
+function normalizeOrderData(data: unknown): OrderRow[] {
+  return (data as OrderRow[]) || [];
+}
+
 export default function Order() {
   const { userID } = useAuth();
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -26,12 +31,14 @@ export default function Order() {
         if (error) {
           console.error("fetchOrders error:", error);
           toast.error("Could not load your orders");
+          setLoading(false);
           return;
         }
-        setOrders((data as OrderRow[]) || []);
+        const normalizedOrders = normalizeOrderData(data);
+        setOrders(normalizedOrders);
+        setLoading(false);
       } catch (err) {
         console.error(err);
-      } finally {
         setLoading(false);
       }
     };
@@ -41,7 +48,7 @@ export default function Order() {
 
   return (
     <div>
-      <h2 className="text-5xl font-medium mb-4">Your Orders</h2>
+      <h2 className="text-5xl max-md:text-2xl font-medium mb-4">Your Orders</h2>
       {loading && <p>Loading orders...</p>}
       {!loading && orders.length === 0 && <p>No orders yet.</p>}
 
@@ -64,9 +71,9 @@ export default function Order() {
           return (
             <div
               key={id}
-              className="p-4 border flex items-center justify-between"
+              className="p-4 border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white shadow-sm"
             >
-              <div className="mr-4">
+              <div className="mb-2 sm:mb-0 sm:mr-4 flex-shrink-0 flex items-center justify-center">
                 {/* try to show a thumbnail for the order: prefer order-level image, fall back to first item image */}
                 {(() => {
                   const od = o.order_details as unknown as
@@ -99,24 +106,24 @@ export default function Order() {
                     <img
                       src={String(src)}
                       alt={`order-${id}-img`}
-                      className="w-20 h-20 object-cover rounded"
+                      className="w-24 h-auto sm:w-20 sm:h-20 object-cover"
                     />
                   );
                 })()}
               </div>
-              <div>
-                <div className="font-medium">Order {id}</div>
-                <div className="text-sm text-gray-600">{`₦${Number(
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">Order {id}</div>
+                <div className="text-sm text-gray-600 truncate">{`₦${Number(
                   total
                 ).toLocaleString("en-NG")}`}</div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 truncate">
                   {created ? created.toLocaleString() : "-"}
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-sm">{paymentStatus}</div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-2 sm:mt-0">
+                <div className="text-sm whitespace-nowrap">{paymentStatus}</div>
                 <button
-                  className="px-3 py-1 border flex items-center cursor-pointer gap-2 interactive"
+                  className="px-3 py-1 border flex items-center cursor-pointer gap-2 interactive  hover:bg-gray-50 transition"
                   onClick={() => navigate(`/user/orders/${id}`)}
                   aria-label={`View order ${id}`}
                 >

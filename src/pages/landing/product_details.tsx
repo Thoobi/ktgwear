@@ -6,6 +6,68 @@ import { useCart } from "../../components/hooks/useCart";
 import type { Wearable } from "../../components/context/cart_context";
 import { IoIosClose } from "react-icons/io";
 
+// Helper function to normalize images - extracted to avoid React Compiler issues with try/catch
+function normalizeImages(imgsField: unknown): string[] {
+  const normalizedImages: string[] = [];
+
+  try {
+    if (Array.isArray(imgsField)) {
+      // array of urls or objects
+      for (const v of imgsField as unknown[]) {
+        if (!v) continue;
+        if (typeof v === "string") {
+          normalizedImages.push(v);
+        } else if (typeof v === "object" && v != null) {
+          const maybe =
+            (v as Record<string, unknown>)["url"] ??
+            (v as Record<string, unknown>)["image_url"] ??
+            (v as Record<string, unknown>)["src"];
+          if (maybe) normalizedImages.push(String(maybe));
+        }
+      }
+    } else if (typeof imgsField === "string") {
+      const s = String(imgsField).trim();
+      // try to parse JSON array first
+      if (s.startsWith("[") && s.endsWith("]")) {
+        try {
+          const parsed = JSON.parse(s);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((p) => {
+              if (typeof p === "string") {
+                normalizedImages.push(p);
+              } else if (p && typeof p === "object") {
+                const maybe = p["url"] ?? p["image_url"] ?? p["src"];
+                if (maybe) normalizedImages.push(String(maybe));
+              }
+            });
+          }
+        } catch {
+          // not valid json, fall back to comma-split
+        }
+      }
+
+      if (normalizedImages.length === 0) {
+        // split on common separators if comma-separated list
+        const parts = s
+          .split(/[;,\s]+/)
+          .map((p) => p.trim())
+          .filter(Boolean);
+        if (parts.length > 1) {
+          normalizedImages.push(...parts);
+        } else {
+          normalizedImages.push(s);
+        }
+      }
+    } else if (imgsField != null) {
+      normalizedImages.push(String(imgsField));
+    }
+  } catch {
+    // ignore and fallback to empty array
+  }
+
+  return normalizedImages;
+}
+
 const ProductDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -72,9 +134,10 @@ const ProductDetails: React.FC = () => {
         }
 
         setAvailableSizes(sizes);
-        if (sizes.length > 0) {
-          setSelectedSizes([sizes[0]]);
-        }
+        // Don't select any size by default
+        // if (sizes.length > 0) {
+        //   setSelectedSizes([sizes[0]]);
+        // }
 
         // normalize images: support multiple shapes from the DB
         const imgsField =
@@ -82,57 +145,7 @@ const ProductDetails: React.FC = () => {
           (data as unknown as Record<string, unknown>)["image_urls"] ??
           (data as unknown as Record<string, unknown>)["image_url"];
 
-        const normalizedImages: string[] = [];
-
-        try {
-          if (Array.isArray(imgsField)) {
-            // array of urls or objects
-            for (const v of imgsField as unknown[]) {
-              if (!v) continue;
-              if (typeof v === "string") normalizedImages.push(v);
-              else if (typeof v === "object" && v != null) {
-                const maybe =
-                  (v as Record<string, unknown>)["url"] ??
-                  (v as Record<string, unknown>)["image_url"] ??
-                  (v as Record<string, unknown>)["src"];
-                if (maybe) normalizedImages.push(String(maybe));
-              }
-            }
-          } else if (typeof imgsField === "string") {
-            const s = String(imgsField).trim();
-            // try to parse JSON array first
-            if (s.startsWith("[") && s.endsWith("]")) {
-              try {
-                const parsed = JSON.parse(s);
-                if (Array.isArray(parsed)) {
-                  parsed.forEach((p) => {
-                    if (typeof p === "string") normalizedImages.push(p);
-                    else if (p && typeof p === "object") {
-                      const maybe = p["url"] ?? p["image_url"] ?? p["src"];
-                      if (maybe) normalizedImages.push(String(maybe));
-                    }
-                  });
-                }
-              } catch {
-                // not valid json, fall back to comma-split
-              }
-            }
-
-            if (normalizedImages.length === 0) {
-              // split on common separators if comma-separated list
-              const parts = s
-                .split(/[;,\s]+/)
-                .map((p) => p.trim())
-                .filter(Boolean);
-              if (parts.length > 1) normalizedImages.push(...parts);
-              else normalizedImages.push(s);
-            }
-          } else if (imgsField != null) {
-            normalizedImages.push(String(imgsField));
-          }
-        } catch {
-          // ignore and fallback to single image
-        }
+        const normalizedImages = normalizeImages(imgsField);
 
         if (normalizedImages.length > 0) {
           setImages(normalizedImages);
@@ -205,31 +218,31 @@ const ProductDetails: React.FC = () => {
   if (!product) return <div className="p-8">No product found.</div>;
 
   return (
-    <div className="min-h-screen pt-20 pb-12 font-clash">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
+    <div className="min-h-[80vh] pt-20 pb-12 font-clash">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 px-4 py-14 max-md:py-5">
         <div className="">
-          <div className="w-full h-[480px] flex items-center justify-center bg-white">
+          <div className="w-full h-[480px] max-md:h-[300px] flex items-center justify-center bg-white">
             <img
               src={images[activeImage] ?? product.image_url}
               alt={product.name}
-              className="max-h-[480px] w-full object-contain"
+              className="max-h-[480px] max-md:max-h-[320px] w-full object-contain"
             />
           </div>
 
           {images && images.length > 1 && (
-            <div className="mt-3 flex gap-2 overflow-x-auto">
+            <div className="mt-5 flex gap-2 overflow-x-auto">
               {images.map((src, idx) => (
                 <button
                   key={String(src) + idx}
                   onClick={() => setActiveImage(idx)}
-                  className={`flex-none border rounded p-1 bg-white ${
+                  className={`flex-none border border-black rounded-sm p-1 bg-white ${
                     idx === activeImage ? "ring-2 ring-black" : ""
                   }`}
                 >
                   <img
                     src={src}
                     alt={`${product.name} ${idx + 1}`}
-                    className="h-16 w-16 object-cover"
+                    className="h-16 w-16 max-md:h-10 max-md:w-auto object-cover"
                   />
                 </button>
               ))}
@@ -237,12 +250,11 @@ const ProductDetails: React.FC = () => {
           )}
         </div>
 
-        <div className="flex flex-col pt-5">
-          <h1 className="text-3xl font-semibold mb-2 uppercase">
+        <div className="flex flex-col pt-5 max-md:pt-3">
+          <h1 className="text-3xl max-md:text-xl font-medium mb-2 max-md:mb-0 uppercase">
             {product.name}
           </h1>
-          <p className="text-sm text-gray-600 mb-4">{product.category}</p>
-          <p className="text-2xl font-medium mb-6">
+          <p className="text-2xl max-md:text-xl font-medium mb-6 max-md:mb-2">
             {(() => {
               if (!selectedSizes || selectedSizes.length === 0) {
                 return `₦${product.price.toLocaleString("en-NG")}`;
