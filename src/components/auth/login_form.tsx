@@ -38,7 +38,10 @@ export default function LoginForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5 py-10 px-5 w-lg">
+    <form
+      onSubmit={onSubmit}
+      className="flex flex-col gap-5 py-10 px-5 max-md:px-0 w-lg max-md:w-full"
+    >
       <CustomInput
         label="Email"
         type="email"

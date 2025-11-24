@@ -13,6 +13,8 @@ export default function ForgotPasswordForm() {
     e.preventDefault();
     setErrors({});
     const res = await handleForgotPassword(email);
+    console.log("Forgot password response:", res);
+    setEmail("");
     if (res.validationErrors) setErrors(res.validationErrors);
   };
 
@@ -26,7 +28,10 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5 py-10 px-5 w-lg">
+    <form
+      onSubmit={onSubmit}
+      className="flex flex-col gap-5 py-10 px-5 w-lg max-md:w-full max-md:px-0"
+    >
       <CustomInput
         label="Email"
         type="email"

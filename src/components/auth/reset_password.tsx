@@ -82,7 +82,10 @@ export default function ResetPasswordForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5 py-10 px-5 w-lg">
+    <form
+      onSubmit={onSubmit}
+      className="flex flex-col gap-5 py-10 max-md:py-8 px-5 w-lg max-md:w-full max-md:px-0"
+    >
       <CustomInput
         label="New password"
         type="password"
