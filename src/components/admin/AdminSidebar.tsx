@@ -6,8 +6,8 @@ const activeClass = "font-semibold border-l-4 border-black pl-2 bg-black/5";
 
 const AdminSidebar: React.FC = () => {
   return (
-    <aside className="w-56 min-h-screen border-r bg-white p-4 font-clash">
-      <nav className="space-y-2">
+    <aside className="w-56 h-screen border-r bg-white p-4 font-clash fixed left-0 top-[70px] z-40 overflow-y-auto">
+      <nav className="space-y-3">
         <NavLink
           to="/admin"
           end

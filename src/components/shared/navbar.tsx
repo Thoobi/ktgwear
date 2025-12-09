@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import Logo from "../../assets/ktg-text-logo.png";
 import { useCart } from "../hooks/useCart";
 import { useMemo, useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
 
 const baseLinks = [
   { label: "Home", url: "/" },
@@ -16,6 +17,7 @@ export default function Navbar() {
   const { isAuthenticated } = useAuth();
   const { setIsCartVisible, cartLength, allWearables, getAllWears } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,16 +29,36 @@ export default function Navbar() {
     }
   }, [allWearables, getAllWears]);
 
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .select("name")
+          .order("name");
+
+        if (error) {
+          console.error("Error fetching categories:", error);
+          return;
+        }
+
+        const categoryNames = data.map((cat) => cat.name);
+        setCategories(categoryNames);
+      } catch (err) {
+        console.error("Error:", err);
+      }
+    };
+
+    void fetchCategories();
+  }, []);
+
   const categoryLinks = useMemo(() => {
-    const set = new Set<string>();
-    (allWearables || []).forEach((w) => {
-      if (w.category) set.add(w.category);
-    });
-    return Array.from(set).map((cat) => {
+    return categories.map((cat) => {
       const slug = cat.toLowerCase().replace(/\s+/g, "-");
       return { label: cat, url: `/shop/${slug}` };
     });
-  }, [allWearables]);
+  }, [categories]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 flex justify-between items-center py-5 bg-white backdrop-blur-sm px-10 max-md:px-4.5 border-b border-b-gray-200 font-clash z-50">

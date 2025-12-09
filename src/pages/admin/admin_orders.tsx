@@ -87,9 +87,9 @@ const AdminOrders: React.FC = () => {
   return (
     <AdminGuard>
       <AdminNavbar />
-      <div className="flex">
+      <div className="flex pt-[65px]">
         <AdminSidebar />
-        <div className="p-8 flex-1 font-clash">
+        <div className="p-8 flex-1 font-clash ml-56">
           <h2 className="text-2xl font-medium mb-4">Orders</h2>
 
           <div className="mb-4 space-x-2">

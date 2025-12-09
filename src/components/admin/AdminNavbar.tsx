@@ -7,7 +7,7 @@ const AdminNavbar: React.FC = () => {
   const { handleAdminLogout } = useAuth();
 
   return (
-    <header className="w-full bg-white border-b font-clash">
+    <header className="w-full bg-white border-b font-clash fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
           <Link to="/">

@@ -51,13 +51,16 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!supUser || !supUser.email) {
           setUser(null);
           setIsAuthenticated(false);
+          setUserID(null);
         } else {
           setUser(mapSupabaseUser(supUser));
           setIsAuthenticated(true);
+          setUserID(supUser.id);
         }
       } catch (error) {
         console.error("Auth check failed:", error);
         setIsAuthenticated(false);
+        setUserID(null);
       } finally {
         setIsLoading(false);
       }
@@ -71,6 +74,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       async (_event, session) => {
         setUser(mapSupabaseUser(session?.user ?? null));
         setIsAuthenticated(!!session?.user);
+        setUserID(session?.user?.id ?? null);
         setisLoginLoading(false);
         setisSignupLoading(false);
       }
@@ -83,6 +87,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       } = await supabase.auth.getSession();
       setUser(mapSupabaseUser(session?.user ?? null));
       setIsAuthenticated(!!session?.user);
+      setUserID(session?.user?.id ?? null);
       setIsLoading(false);
     };
     getSession();

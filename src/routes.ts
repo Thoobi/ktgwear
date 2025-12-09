@@ -15,9 +15,13 @@ import HomeLayout from "./layout/home_layout";
 import OrderDetails from "./components/postauth/order_details";
 import AdminDashboard from "./pages/admin/admin_dashboard";
 import AdminProducts from "./pages/admin/admin_products";
+import AdminProductAdd from "./pages/admin/admin_product_add";
+import AdminProductEdit from "./pages/admin/admin_product_edit";
 import AdminOrders from "./pages/admin/admin_orders";
 import AdminManage from "./pages/admin/admin_manage";
 import AdminFeatured from "./pages/admin/admin_featured";
+import AdminFeaturedAdd from "./pages/admin/admin_featured_add";
+import AdminFeaturedEdit from "./pages/admin/admin_featured_edit";
 import NotFound from "./pages/404";
 
 const routes = createBrowserRouter([
@@ -74,9 +78,13 @@ const routes = createBrowserRouter([
     children: [
       { index: true, Component: AdminDashboard },
       { path: "products", Component: AdminProducts },
+      { path: "products/add", Component: AdminProductAdd },
+      { path: "products/edit/:id", Component: AdminProductEdit },
       { path: "orders", Component: AdminOrders },
       { path: "manage", Component: AdminManage },
       { path: "featured", Component: AdminFeatured },
+      { path: "featured/add", Component: AdminFeaturedAdd },
+      { path: "featured/edit/:id", Component: AdminFeaturedEdit },
     ],
   },
   {

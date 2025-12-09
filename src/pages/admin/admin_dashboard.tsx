@@ -106,9 +106,9 @@ const AdminDashboard: React.FC = () => {
   return (
     <AdminGuard>
       <AdminNavbar />
-      <div className="flex font-clash">
+      <div className="flex font-clash pt-[65px]">
         <AdminSidebar />
-        <div className="p-8 flex-1">
+        <div className="p-8 flex-1 ml-56">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-medium mb-4">Admin dashboard</h1>
             <div>

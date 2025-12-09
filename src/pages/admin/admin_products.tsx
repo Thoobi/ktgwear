@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AdminGuard from "../../components/admin/AdminGuard";
 import AdminNavbar from "../../components/admin/AdminNavbar";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import { supabase } from "../../lib/supabase";
-import UploadForm from "../../components/admin/UploadForm";
 import { toast } from "sonner";
+import AddCategoryModal from "../../components/admin/AddCategoryModal";
 
 type Product = {
   id?: string;
@@ -18,7 +19,8 @@ type Product = {
 };
 
 const AdminProducts: React.FC = () => {
-  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [stats, setStats] = useState({
     products: 0,
     orders: 0,
@@ -27,12 +29,7 @@ const AdminProducts: React.FC = () => {
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
-
-  const [editName, setEditName] = useState("");
-  const [editPrice, setEditPrice] = useState("");
-  const [editCategory, setEditCategory] = useState("");
-  const [editSizes, setEditSizes] = useState("");
+  const [deleting, setDeleting] = useState<Product | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -89,67 +86,51 @@ const AdminProducts: React.FC = () => {
     }
   };
 
-  const openEdit = (p: Product) => {
-    setEditing(p);
-    setEditName(p.name ?? "");
-    setEditPrice(String(p.price ?? ""));
-    setEditCategory(p.category ?? "");
-    if (Array.isArray(p.size)) setEditSizes((p.size as string[]).join(","));
-    else setEditSizes(String(p.size ?? ""));
+  const deleteProduct = async (id: string, name: string) => {
+    setDeleting({ id, name } as Product);
   };
 
-  const closeEdit = () => {
-    setEditing(null);
-    setEditName("");
-    setEditPrice("");
-    setEditCategory("");
-    setEditSizes("");
-  };
+  const confirmDelete = async () => {
+    if (!deleting?.id) return;
 
-  const saveEdit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!editing?.id) return toast.error("Missing product id");
     try {
-      const payload: Record<string, unknown> = {
-        name: editName,
-        price: Number(editPrice || 0),
-        category: editCategory,
-        size: editSizes
-          ? JSON.stringify(editSizes.split(/[,;\s]+/).filter(Boolean))
-          : null,
-        updated_at: new Date().toISOString(),
-      };
-
       const { error } = await supabase
         .from("clothes")
-        .update(payload)
-        .eq("id", editing.id);
+        .delete()
+        .eq("id", deleting.id);
       if (error) {
-        console.error("update product error:", error);
-        toast.error("Could not update product");
+        console.error("delete product error:", error);
+        toast.error("Could not delete product");
         return;
       }
-      toast.success("Product updated");
-      closeEdit();
+      toast.success("Product deleted");
+      setDeleting(null);
       void fetchProducts();
+      void fetchStats();
     } catch (err) {
       console.error(err);
-      toast.error("Could not update product");
+      toast.error("Could not delete product");
     }
   };
 
   return (
     <AdminGuard>
       <AdminNavbar />
-      <div className="flex">
+      <div className="flex pt-[65px]">
         <AdminSidebar />
-        <div className="p-8 flex-1 font-clash">
+        <div className="p-8 flex-1 font-clash ml-56">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-medium">Admin dashboard</h2>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowModal(true)}
-                className="bg-black text-white px-4 py-2 cursor-pointer"
+                onClick={() => setShowAddCategory(true)}
+                className="bg-gray-700 text-white px-4 py-2 cursor-pointer hover:bg-gray-800 transition-colors"
+              >
+                Add category
+              </button>
+              <button
+                onClick={() => navigate("/admin/products/add")}
+                className="bg-black text-white px-4 py-2 cursor-pointer hover:bg-gray-900 transition-colors"
               >
                 Add product
               </button>
@@ -186,11 +167,8 @@ const AdminProducts: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {products.map((p) => (
-                  <div
-                    key={p.id}
-                    className="border p-3 rounded flex flex-col gap-3"
-                  >
-                    <div className="w-full h-40 bg-gray-100 rounded overflow-hidden">
+                  <div key={p.id} className="border p-3 flex flex-col gap-3">
+                    <div className="w-full h-auto bg-gray-100 rounded overflow-hidden">
                       <img
                         src={
                           (Array.isArray(p.images) && p.images[0]) ||
@@ -201,19 +179,29 @@ const AdminProducts: React.FC = () => {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{p.name}</h4>
-                      <div className="text-sm text-gray-600">{p.category}</div>
-                      <div className="mt-2">
+                    <div className="flex flex-1 flex-row items-center justify-between px-2">
+                      <div>
+                        <h4 className="font-medium uppercase">{p.name}</h4>
+                        <div className="text-sm text-gray-600">
+                          {p.category}
+                        </div>
+                      </div>
+                      <div className="mt-2 font-medium">
                         ₦{Number(p.price ?? 0).toLocaleString("en-NG")}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-5">
                       <button
-                        onClick={() => openEdit(p)}
-                        className="px-3 py-1 bg-black text-white rounded"
+                        onClick={() => navigate(`/admin/products/edit/${p.id}`)}
+                        className="px-6 py-1.5 bg-black text-white cursor-pointer"
                       >
                         Edit
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(p.id!, p.name!)}
+                        className="px-6 py-1.5 bg-red-500 text-white cursor-pointer hover:bg-red-600"
+                      >
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -222,77 +210,42 @@ const AdminProducts: React.FC = () => {
             )}
           </div>
 
-          {/* Edit modal */}
-          {editing && (
+          {/* Delete confirmation modal */}
+          {deleting && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="bg-white p-6 rounded max-w-lg w-full mx-4">
-                <h3 className="text-xl font-medium mb-4">Edit product</h3>
-                <form onSubmit={saveEdit} className="space-y-3">
-                  <div>
-                    <label className="text-sm block mb-1">Name</label>
-                    <input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="w-full border p-2 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm block mb-1">Price</label>
-                    <input
-                      value={editPrice}
-                      onChange={(e) => setEditPrice(e.target.value)}
-                      className="w-full border p-2 rounded"
-                      type="number"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm block mb-1">Category</label>
-                    <input
-                      value={editCategory}
-                      onChange={(e) => setEditCategory(e.target.value)}
-                      className="w-full border p-2 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm block mb-1">
-                      Sizes (comma separated)
-                    </label>
-                    <input
-                      value={editSizes}
-                      onChange={(e) => setEditSizes(e.target.value)}
-                      className="w-full border p-2 rounded"
-                    />
-                  </div>
-
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => closeEdit()}
-                      className="px-4 py-2 border rounded"
-                    >
-                      Cancel
-                    </button>
-                    <button className="px-4 py-2 bg-black text-white rounded">
-                      Save
-                    </button>
-                  </div>
-                </form>
+              <div className="bg-white p-6 rounded max-w-md w-full mx-4">
+                <h3 className="text-xl font-medium mb-4">Delete Product</h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold">"{deleting.name}"</span>? This
+                  action cannot be undone.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setDeleting(null)}
+                    className="px-4 py-1.5 border cursor-pointer hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => void confirmDelete()}
+                    className="px-4 py-1.5 bg-red-500 text-white cursor-pointer hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {showModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="max-w-3xl w-full mx-4">
-                <UploadForm
-                  onClose={() => {
-                    setShowModal(false);
-                    void fetchStats();
-                  }}
-                />
-              </div>
-            </div>
-          )}
+          <AddCategoryModal
+            isOpen={showAddCategory}
+            onClose={() => setShowAddCategory(false)}
+            onCategoryAdded={() => {
+              // Optional: refresh products if needed
+              void fetchProducts();
+            }}
+          />
         </div>
       </div>
     </AdminGuard>

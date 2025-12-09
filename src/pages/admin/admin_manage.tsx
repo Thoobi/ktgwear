@@ -100,9 +100,9 @@ const AdminManage: React.FC = () => {
   return (
     <AdminGuard>
       <AdminNavbar />
-      <div className="flex">
+      <div className="flex pt-[65px]">
         <AdminSidebar />
-        <div className="p-8 max-w-2xl flex-1">
+        <div className="p-8 max-w-2xl flex-1 ml-56">
           <h2 className="text-2xl font-semibold mb-4">Manage Admins</h2>
 
           <form onSubmit={promote} className="mb-6 flex gap-2">

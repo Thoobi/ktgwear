@@ -177,20 +177,24 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     return arr.length > 0 ? arr : ["S", "M", "L", "XL"];
   }, [allWearables]);
 
-  // ---------- Load Cart from Session ----------
+  // ---------- Load Cart from Session (guest users only) ----------
   useEffect(() => {
+    // Only load from session storage if user is NOT signed in
+    if (userID) return;
+
     const localData = sessionStorage.getItem("cartItems");
     if (localData) {
       const parsedData: CartItem[] = JSON.parse(localData);
       setCartItems(parsedData);
       setCartLength(parsedData.length || 0);
     }
-  }, []);
-
+  }, [userID]);
   // ---------- Load Cart from DB for signed-in users ----------
+  const [hasLoadedDbCart, setHasLoadedDbCart] = useState(false);
+
   useEffect(() => {
-    // when user signs in, try to load their saved cart from DB and map to CartItem[]
-    if (!userID) return;
+    // when user signs in, load their cart from DB only
+    if (!userID || hasLoadedDbCart) return;
 
     const fetchDbCart = async () => {
       try {
@@ -206,8 +210,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         }
 
         const rows = data as unknown as Array<Record<string, unknown>>;
+
+        // Always use DB cart as source of truth for signed-in users
         if (!rows || rows.length === 0) {
-          // nothing in DB, keep any existing session cart
+          // empty cart in DB - clear local cart
+          setCartItems([]);
+          setCartLength(0);
+          sessionStorage.removeItem("cartItems");
+          setHasLoadedDbCart(true);
           return;
         }
 
@@ -236,28 +246,39 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           } as CartItem;
         });
 
-        // prefer DB cart as authoritative when data exists
+        // DB cart is the only source of truth for signed-in users
         setCartItems(mapped);
         setCartLength(mapped.length || 0);
         sessionStorage.setItem("cartItems", JSON.stringify(mapped));
+        setHasLoadedDbCart(true);
       } catch (err) {
         console.error("error loading cart from db:", err);
       }
     };
 
     void fetchDbCart();
-  }, [userID]);
+  }, [userID, hasLoadedDbCart]);
 
   // ---------- Cart Logic ----------
   const addToCart = useCallback(
     (value: Wearable, sizeParam?: string) => {
+      console.log("=== ADD TO CART CALLED ===");
+      console.log("Product:", value);
+      console.log("Size param:", sizeParam);
+      console.log("Selected size state:", selectedSize);
+      console.log("User ID:", userID);
+
       setCartItems((prevCart) => {
+        console.log("Previous cart:", prevCart);
         const prevCartItems = Array.isArray(prevCart) ? prevCart : [];
 
         const sizeToUse =
           sizeParam && sizeParam !== "SELECT A SIZE" ? sizeParam : selectedSize;
 
-        if (!sizeToUse) {
+        console.log("Size to use:", sizeToUse);
+
+        if (!sizeToUse || sizeToUse === "SELECT A SIZE") {
+          console.log("ERROR: No size selected");
           toast.error("Please select a size first");
           return prevCartItems;
         }
@@ -267,6 +288,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         );
 
         if (existingProduct) {
+          console.log("ERROR: Item already in cart");
           toast.error(
             `This item in size ${sizeToUse} is already in your cart!`
           );
@@ -276,76 +298,113 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         const newItem: CartItem = { ...value, quantity: 1, size: sizeToUse };
         const updatedCart = [...prevCartItems, newItem];
 
+        console.log("New item:", newItem);
+        console.log("Updated cart:", updatedCart);
+
         toast.success(`Item added in size ${sizeToUse} to cart 🤩`);
         sessionStorage.setItem("cartItems", JSON.stringify(updatedCart));
         setCartLength(updatedCart.length);
 
-        // persist to DB for signed-in users
-        if (userID) {
-          (async () => {
-            try {
-              // find existing same product+size for this user
-              const { data: existingRows, error: selErr } = await supabase
-                .from("cart")
-                .select("*")
-                .eq("user_id", userID)
-                .eq("product_id", value.id);
+        // persist to DB for signed-in users (or allow anonymous carts)
+        (async () => {
+          try {
+            console.log("Attempting to save to DB...");
+            console.log("UserID:", userID);
+            console.log("Product ID:", value.id);
 
-              if (selErr) {
-                console.error("cart select error:", selErr);
-              }
+            if (!userID) {
+              console.log("No user ID - skipping database save (guest cart)");
+              return;
+            }
 
-              // attempt to find matching size entry (size stored as JSON/array)
-              let matched = null as Record<string, unknown> | null;
-              if (Array.isArray(existingRows)) {
-                for (const r of existingRows) {
-                  try {
-                    const s = (r as Record<string, unknown>)["size"] as unknown;
-                    if (Array.isArray(s)) {
-                      if (String(s[0]) === String(sizeToUse)) {
-                        matched = r as Record<string, unknown>;
-                        break;
-                      }
-                    } else if (typeof s === "string") {
-                      if (String(s) === String(sizeToUse)) {
-                        matched = r as Record<string, unknown>;
-                        break;
-                      }
+            if (!value.id) {
+              console.error("ERROR: Product ID is missing!");
+              toast.error("Cannot add to cart: Product ID missing");
+              return;
+            }
+
+            // find existing same product+size for this user
+            const { data: existingRows, error: selErr } = await supabase
+              .from("cart")
+              .select("*")
+              .eq("user_id", userID)
+              .eq("product_id", value.id);
+
+            if (selErr) {
+              console.error("cart select error:", selErr);
+              toast.error("Failed to check cart");
+              return;
+            }
+
+            console.log("Existing rows:", existingRows);
+
+            // attempt to find matching size entry (size stored as JSON/array)
+            let matched = null as Record<string, unknown> | null;
+            if (Array.isArray(existingRows)) {
+              for (const r of existingRows) {
+                try {
+                  const s = (r as Record<string, unknown>)["size"] as unknown;
+                  if (Array.isArray(s)) {
+                    if (String(s[0]) === String(sizeToUse)) {
+                      matched = r as Record<string, unknown>;
+                      break;
                     }
-                  } catch {
-                    /* ignore malformed row size */
+                  } else if (typeof s === "string") {
+                    if (String(s) === String(sizeToUse)) {
+                      matched = r as Record<string, unknown>;
+                      break;
+                    }
                   }
+                } catch {
+                  /* ignore malformed row size */
                 }
               }
-
-              if (matched) {
-                const newQty = (Number(matched["quantity"] ?? 0) || 0) + 1;
-                const { error: updErr } = await supabase
-                  .from("cart")
-                  .update({ quantity: newQty })
-                  .eq("id", matched["id"] as string);
-                if (updErr) console.error("cart update error:", updErr);
-              } else {
-                const payload = {
-                  user_id: userID,
-                  product_id: value.id,
-                  name: value.name,
-                  price: value.price,
-                  category: value.category,
-                  image_url: value.image_url,
-                  size: [sizeToUse],
-                  quantity: 1,
-                } as Record<string, unknown>;
-                const { error: insErr } = await supabase
-                  .from("cart")
-                  .insert([payload]);
-                if (insErr) console.error("cart insert error:", insErr);
-              }
-            } catch (err) {
-              console.error("persist cart add error:", err);
             }
-          })();
-        }
+
+            if (matched) {
+              console.log("Updating existing cart item quantity");
+              const newQty = (Number(matched["quantity"] ?? 0) || 0) + 1;
+              const { error: updErr } = await supabase
+                .from("cart")
+                .update({ quantity: newQty })
+                .eq("id", matched["id"] as string);
+              if (updErr) {
+                console.error("cart update error:", updErr);
+                toast.error("Failed to update cart quantity");
+              } else {
+                console.log("Cart updated successfully");
+              }
+            } else {
+              console.log("Inserting new cart item");
+              const payload = {
+                user_id: userID,
+                product_id: String(value.id),
+                name: String(value.name),
+                price: Number(value.price),
+                category: String(value.category),
+                image_url: String(value.image_url),
+                size: [sizeToUse],
+                quantity: 1,
+              };
+              console.log("Payload:", payload);
+
+              const { data: insertData, error: insErr } = await supabase
+                .from("cart")
+                .insert([payload])
+                .select();
+
+              if (insErr) {
+                console.error("cart insert error:", insErr);
+                toast.error(`Failed to save to cart: ${insErr.message}`);
+              } else {
+                console.log("Cart inserted successfully:", insertData);
+              }
+            }
+          } catch (err) {
+            console.error("persist cart add error:", err);
+            toast.error("Error saving cart to database");
+          }
+        })();
 
         return updatedCart;
       });
