@@ -33,7 +33,7 @@ const CountrySelect = ({
         name={field.name}
         value={field.value ?? ""}
         onChange={(e) => handleChange(e.target.value)}
-        className="border-2 border-gray-500  px-2 py-2.5 w-[250px]"
+        className="border-2 border-gray-500  px-2 py-2.5 w-[250px] max-md:w-full"
       >
         <option value="">Select a country</option>
         {options.map((opt) => (

@@ -187,11 +187,11 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
       }}
     >
       {({ errors, touched }) => (
-        <Form className="flex flex-col gap-2 px-5">
+        <Form className="flex flex-col gap-2 px-5 max-md:px-0">
           {/* Save prompt card shown after user submits the form */}
           {pendingSave && (
             <div className="mb-4 p-4 border bg-white shadow">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start max-md:flex-col max-md:gap-3 justify-between">
                 <div className="pr-4">
                   <div className="text-sm font-medium">Save shipping info?</div>
                   <div className="text-xs text-gray-600">
@@ -359,7 +359,7 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
           )}
           {savedShipping && isMostlyEmpty(shippingInfo) && (
             <div className="mb-4 p-3 border  bg-gray-50">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center max-md:flex-col max-md:gap-3 justify-between">
                 <div>
                   <div className="text-base font-medium">
                     Saved shipping info found
@@ -373,7 +373,6 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
                     type="button"
                     className="px-3 py-1 border text-sm cursor-pointer"
                     onClick={() => {
-                      // populate form via context setter
                       setShippingInfo(savedShipping as ShippingInfoType);
                     }}
                   >
@@ -383,7 +382,6 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
                     type="button"
                     className="px-3 py-1 border text-sm cursor-pointer"
                     onClick={() => {
-                      // dismiss saved info for now (will still be available next time)
                       setSavedShipping(null);
                     }}
                   >
@@ -393,15 +391,15 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
               </div>
             </div>
           )}
-          <div className="flex w-full gap-3 items-start">
+          <div className="flex w-full gap-3 items-start max-md:items-center max-md:flex-col">
             <div className="flex flex-col w-full">
-              <label className="text-lg">First Name</label>
+              <label className="text-lg max-md:text-base">First Name</label>
               <Field
                 type="text"
                 id="firstName"
                 name="firstName"
                 placeholder="First Name"
-                className={`border-2 border-gray-500 h-[45px] p-2 text-base w-[250px] focus:outline-none ${
+                className={`border-2 border-gray-500 h-[45px] p-2 text-base w-[250px] max-md:w-full focus:outline-none ${
                   errors.firstName && touched.firstName ? "border-red-500" : ""
                 }`}
               />
@@ -411,14 +409,14 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-col ">
-              <label className="text-lg">Last Name</label>
+            <div className="flex flex-col w-full">
+              <label className="text-lg max-md:text-base">Last Name</label>
               <Field
                 type="text"
                 id="lastName"
                 name="lastName"
                 placeholder="Last Name"
-                className={`border-2 border-gray-500 h-[45px] p-2 text-base w-[250px] focus:outline-none ${
+                className={`border-2 border-gray-500 h-[45px] p-2 text-base w-[250px] max-md:w-full focus:outline-none ${
                   errors.lastName && touched.lastName ? "border-red-500" : ""
                 }`}
               />
@@ -430,15 +428,15 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
             </div>
           </div>
 
-          <div className="flex gap-3 w-full items-center">
-            <div className="flex flex-col">
+          <div className="flex gap-3 w-full max-md:flex-col items-center">
+            <div className="flex flex-col max-md:w-full">
               <label htmlFor="email">Email</label>
               <Field
                 type="email"
                 id="email"
                 name="email"
                 placeholder="Email"
-                className={`border-2 border-gray-500 h-[45px] p-2 text-base w-[250px] focus:outline-none ${
+                className={`border-2 border-gray-500 h-[45px] p-2 max-md:w-full text-base w-[250px] focus:outline-none ${
                   errors.email && touched.email ? "border-red-500" : ""
                 }`}
               />
@@ -448,14 +446,14 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col max-md:w-full">
               <label>Phone</label>
               <Field
                 type="text"
                 id="phone"
                 name="phone"
                 placeholder="Phone"
-                className={`border-2 border-gray-500 h-[45px] p-2 text-base w-[250px] focus:outline-none ${
+                className={`border-2 border-gray-500 h-[45px] p-2 max-md:w-full text-base w-[250px] focus:outline-none ${
                   errors.phone && touched.phone ? "border-red-500" : ""
                 }`}
               />
@@ -485,8 +483,8 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
             ) : null}
           </div>
 
-          <div className="flex gap-3 w-full justify-center items-center">
-            <div className="flex flex-col">
+          <div className="flex gap-3 w-full max-md:flex-col justify-center items-center">
+            <div className="flex flex-col max-md:w-full">
               <label>Country</label>
               <Field name="country">
                 {({ field, form }: FieldProps) => (
@@ -505,14 +503,14 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
               ) : null}
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col max-md:w-full">
               <label>Zip</label>
               <Field
                 type="text"
                 id="zip"
                 name="zip"
                 placeholder="Enter Zip Code"
-                className={`border-2 border-gray-500 h-[45px] p-2 text-lg w-[250px] focus:outline-none ${
+                className={`border-2 border-gray-500 h-[45px] p-2 text-lg w-[250px] max-md:w-full focus:outline-none ${
                   errors.zip && touched.zip ? "border-red-500" : ""
                 }`}
               />
@@ -524,15 +522,15 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
             </div>
           </div>
 
-          <div className="flex gap-3 w-full justify-center items-center">
-            <div className="flex flex-col">
+          <div className="flex gap-3 w-full max-md:flex-col justify-center items-center">
+            <div className="flex flex-col max-md:w-full">
               <label>City</label>
               <Field
                 type="text"
                 id="city"
                 name="city"
                 placeholder="City"
-                className={`border-2 border-gray-500 h-[45px] p-2 text-lg w-[250px] focus:outline-none ${
+                className={`border-2 border-gray-500 h-[45px] max-md:w-full p-2 text-lg w-[250px] focus:outline-none ${
                   errors.city && touched.city ? "border-red-500" : ""
                 }`}
               />
@@ -542,14 +540,14 @@ const ShippingInfo: React.FC<Props> = ({ onNext, shippingInfo }) => {
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col max-md:w-full">
               <label>State</label>
               <Field
                 type="text"
                 id="state"
                 name="state"
                 placeholder="State"
-                className={`border-2 border-gray-500 h-[45px] p-2 text-lg w-[250px] focus:outline-none ${
+                className={`border-2 border-gray-500 h-[45px] p-2 text-lg max-md:w-full w-[250px] focus:outline-none ${
                   errors.state && touched.state ? "border-red-500" : ""
                 }`}
               />

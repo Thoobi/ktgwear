@@ -170,7 +170,7 @@ const Payment: React.FC<Props> = ({ onNext, onBack }) => {
   return (
     <section>
       <div className="flex flex-col items-center justify-center w-full h-full">
-        <h2 className="text-4xl font-bold mb-4">Payment</h2>
+        <h2 className="text-4xl max-md:text-3xl font-semibold my-4">Payment</h2>
         <div className="mb-4 text-center">
           <div className="text-sm text-gray-600">Amount to pay</div>
           <div className="text-2xl font-semibold">
@@ -186,7 +186,7 @@ const Payment: React.FC<Props> = ({ onNext, onBack }) => {
             initializeTransaction();
             console.log("amount:", cartTotal, "email:", shippingInfo.email);
           }}
-          className="px-8 py-2 bg-blue-600 text-white text-lg font-medium rounded-full cursor-pointer"
+          className="px-8 py-1.5 bg-green-600 text-white text-lg max-md:text-base font-medium cursor-pointer"
         >
           Pay Now
         </button>

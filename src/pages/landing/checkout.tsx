@@ -39,17 +39,17 @@ const Checkout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black font-clash pt-10 pb-16 px-12">
-      <h1 className="text-8xl font-medium mb-6">Checkout</h1>
-      <div className="w-full flex flex-row justify-between gap-8 px-12">
-        <div className="w-[600px] p-6 border rounded h-full sticky top-20">
+    <div className="min-h-screen bg-white text-black font-clash pt-10 pb-16 max-md:px-5 px-12">
+      <h1 className="text-8xl max-md:text-4xl font-medium mb-6">Checkout</h1>
+      <div className="w-full flex flex-row max-md:flex-col-reverse justify-between gap-8 px-12 max-md:px-0">
+        <div className="w-[600px] max-md:w-full p-6 max-md:p-3 border rounded h-full sticky top-20">
           <div className="flex flex-col h-full">
             <div className="flex-1 overflow-auto">
               <CheckoutProcess />
             </div>
           </div>
         </div>
-        <div className="">
+        <div className="max-md:w-full">
           <div>
             <h3 className="text-xl font-medium mb-4">Order summary</h3>
             <div className="flex justify-between mb-2">
@@ -69,7 +69,7 @@ const Checkout: React.FC = () => {
           {cartItems.length === 0 ? (
             <>
               {" "}
-              <div className="p-8 w-[300px] border border-gray-200 rounded">
+              <div className="p-8 w-[300px] max-md:w-full border border-gray-200 rounded">
                 Your cart is empty.
               </div>
               <button
@@ -80,7 +80,7 @@ const Checkout: React.FC = () => {
               </button>
             </>
           ) : (
-            <div className="flex flex-col gap-6 w-[450px]">
+            <div className="flex flex-col gap-6 w-[450px] max-md:w-full">
               {cartItems.map((item, i) => (
                 <div
                   key={`${item.id}-${item.size}-${i}`}
@@ -102,29 +102,6 @@ const Checkout: React.FC = () => {
                         {item.size}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      {/* <button
-                        onClick={() => decreaseQuantity(item)}
-                        className="px-2 py-1 bg-gray-100 rounded cursor-pointer"
-                      >
-                        <FiMinus />
-                      </button> */}
-                      <div className="px-3">{item.quantity}</div>
-                      {/* <button
-                        onClick={() => increaseQuantity(item)}
-                        className="px-2 py-1 bg-gray-100 rounded cursor-pointer"
-                      >
-                        <FiPlus />
-                      </button> */}
-                    </div>
-                    {/* <button
-                      onClick={() => removeFromCart(item)}
-                      className="text-sm text-red-500 cursor-pointer"
-                    >
-                      <FiTrash2 />
-                    </button> */}
                   </div>
                 </div>
               ))}
